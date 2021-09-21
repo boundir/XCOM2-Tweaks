@@ -7,10 +7,7 @@ function int GetAttackingDamageModifier(XComGameState_Effect EffectState, XComGa
 	local X2WeaponTemplate WeaponTemplate;
 	local X2AbilityToHitCalc_StandardAim StandardHit;
 	local X2Effect_ApplyWeaponDamage WeaponDamageEffect;
-	local XComGameState_HeadquartersXCom XComHQ;
 	local int DamageMod;
-
-	`log("Bonus critical damage:" @ BonusCritDmg,, 'BetterRepeaterEffect');
 
 	if (class'XComGameStateContext_Ability'.static.IsHitResultHit(AppliedData.AbilityResultContext.HitResult))
 	{
@@ -20,7 +17,7 @@ function int GetAttackingDamageModifier(XComGameState_Effect EffectState, XComGa
 		{
 			if (WeaponDamageEffect.bIgnoreBaseDamage)
 			{
-				return 0;
+				return DamageMod;
 			}
 		}
 
@@ -28,32 +25,26 @@ function int GetAttackingDamageModifier(XComGameState_Effect EffectState, XComGa
 
 		if(StandardHit != none && StandardHit.bIndirectFire) 
 		{
-			return 0;
+			return DamageMod;
 		}
 
-		DamageMod = 0;
 		WeaponTemplate = X2WeaponTemplate(AbilityState.GetSourceWeapon().GetMyTemplate());
 
-		XComHQ = XComGameState_HeadquartersXCom( `XCOMHISTORY.GetSingleGameStateObjectForClass( class'XComGameState_HeadquartersXCom', true ) );
-		if (XComHQ != none)
+		if (WeaponTemplate.WeaponCat == 'grenade')
 		{
-			if(XComHQ.bEmpoweredUpgrades)
-			{
-				DamageMod = class'X2Ability_Tweaks'.default.REPEATER_EMPOWER_BONUS_DMG;
-			}
+			return DamageMod;
 		}
 
-		if(WeaponTemplate.InventorySlot == eInvSlot_PrimaryWeapon)
+		DamageMod = (class'X2Item_DefaultUpgrades'.static.AreUpgradesEmpowered()) ? class'X2Ability_Tweaks'.default.REPEATER_EMPOWER_BONUS_DMG : 0;
+
+		if(AbilityState.SourceWeapon == EffectState.ApplyEffectParameters.ItemStateObjectRef)
 		{
-			if(AbilityState.SourceWeapon == EffectState.ApplyEffectParameters.ItemStateObjectRef)
+			if (AppliedData.AbilityResultContext.HitResult == eHit_Crit)
 			{
-				if (AppliedData.AbilityResultContext.HitResult == eHit_Crit)
-				{
-					return DamageMod + BonusCritDmg;
-				}
+				return DamageMod + BonusCritDmg;
 			}
 		}
 	}
 
-	return 0;
+	return DamageMod;
 }

@@ -44,6 +44,9 @@
     <Content Include="Src\BoundirTweaks\Classes\X2Effect_BetterRepeater.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\BoundirTweaks\Classes\X2EventListener_GTSTrainingTweak.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\BoundirTweaks\Classes\X2Helper_TemplateTweaks.uc">
       <SubType>Content</SubType>
     </Content>

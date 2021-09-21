@@ -40,6 +40,10 @@ static function OnPostAbilityTemplatesCreated()
 	class'X2Helper_TemplateTweaks'.static.PatchBullRush();
 	// Modify DisruptorRifleCrit so it can also be effective against Templar and Psi Operative
 	class'X2Helper_TemplateTweaks'.static.PatchDisruptorRifleAbility();
+	// Rulers resume timer on escape
+	class'X2Helper_TemplateTweaks'.static.PatchRulerPauseTimer();
+	// Fix Pounce to not trigger when concealed
+	class'X2Helper_TemplateTweaks'.static.PatchPounce();
 }
 
 static function OnPostItemTemplatesCreated()
@@ -53,12 +57,16 @@ static function OnPostItemTemplatesCreated()
 	class'X2Helper_TemplateTweaks'.static.BetterRepeater();
 	// Add Crit ability to Warlock rifle (DisruptorRifleCrit)
 	class'X2Helper_TemplateTweaks'.static.PatchWarlockRifle();
+	// Cap ability rewards from Covert Action
+	class'X2Helper_TemplateTweaks'.static.CapSoldierStatBoostRewards();
 }
 
 static function OnPostCharacterTemplatesCreated()
 {
 	// Modify Beta Strike bonus for specific units
 	class'X2Helper_TemplateTweaks'.static.PatchBetaStrike();
+	// Adds Pause & Resume Timer abilities to Rulers
+	class'X2Helper_TemplateTweaks'.static.PatchRulersTimer();
 }
 
 static function bool AbilityTagExpandHandler(string InString, out string OutString)

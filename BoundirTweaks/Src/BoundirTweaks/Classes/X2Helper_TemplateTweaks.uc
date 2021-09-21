@@ -6,7 +6,15 @@ struct BetaStrikeModifier
 	var Float BetaStrikeMod;
 };
 
+struct StatBoostCap
+{
+	var ECharStatType StatType;
+	var float StatCap;
+	var name BoostName;
+};
+
 var config(GameData) array<name> DISABLE_DARK_EVENTS;
+var config(GameData) array<StatBoostCap> STAT_BOOST_CAP;
 
 var config(GameData_SoldierSkills) float REVEAL_RANGE_METERS;
 var config(GameData_SoldierSkills) array<name> VANISH_ABILITIES;
@@ -54,7 +62,6 @@ static function bool CantActivate(XComGameState_DarkEvent DarkEventState)
 {
 	return ReturnFalse();
 }
-
 
 static function PatchWeaponThrown()
 {
@@ -241,7 +248,6 @@ static function BetterRepeater()
 			{
 				AbilityName = name('BetterRepeaterM' $ idx+1);
 				WeaponUpgradeTemplate.FreeKillFn = NoFreeKill;
-				`log("Adding Ability" @ AbilityName @ "to" @ UpgradeName,, 'BetterRepeater');
 
 				WeaponUpgradeTemplate.BonusAbilities.AddItem(AbilityName);
 			}
@@ -286,13 +292,113 @@ static function PatchWarlockRifle()
 	}
 }
 
+static function CapSoldierStatBoostRewards()
+{
+	local X2ItemTemplateManager ItemTemplateManager;
+	local array<X2DataTemplate> DifficulityVariants;
+	local X2DataTemplate DataTemplate;
+	local X2EquipmentTemplate EquipmentTemplate;
+	local StatBoostCap Boost;
+
+	ItemTemplateManager = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
+
+	foreach default.STAT_BOOST_CAP(Boost)
+	{
+		ItemTemplateManager.FindDataTemplateAllDifficulties(Boost.BoostName, DifficulityVariants);
+
+		foreach DifficulityVariants(DataTemplate)
+		{
+			EquipmentTemplate = X2EquipmentTemplate(DataTemplate);
+
+			if(EquipmentTemplate != none)
+			{
+				EquipmentTemplate.OnAcquiredFn = ApplyStatBoostIfAllowed;
+			}
+		}
+	}
+}
+
+static function bool ApplyStatBoostIfAllowed(XComGameState NewGameState, XComGameState_Item ItemState)
+{
+	local XComGameState_Unit UnitState;
+	local StatBoost ItemStatBoost;
+	local float NewMaxStat;
+	
+	UnitState = XComGameState_Unit(NewGameState.GetGameStateForObjectID(ItemState.LinkedEntity.ObjectID));
+	if (UnitState == none)
+	{
+		UnitState = XComGameState_Unit(NewGameState.ModifyStateObject(class'XComGameState_Unit', ItemState.LinkedEntity.ObjectID));
+	}
+	
+	if (UnitState == none)
+	{
+		// Should not happen if the item is set up as a reward properly
+		`RedScreen("Tried to give a stat boost item, but there is no linked unit to increase stats @gameplay @jweinhoffer");
+		return false;
+	}
+
+	foreach ItemState.StatBoosts(ItemStatBoost)
+	{
+		NewMaxStat = int(UnitState.GetMaxStat(ItemStatBoost.StatType) + ItemStatBoost.Boost);
+
+		if ((ItemStatBoost.StatType == eStat_HP) && `SecondWaveEnabled('BetaStrike'))
+		{
+			NewMaxStat += ItemStatBoost.Boost * (class'X2StrategyGameRulesetDataStructures'.default.SecondWaveBetaStrikeHealthMod - 1.0);
+		}
+
+		if(isUnitStatCapped(ItemStatBoost.StatType, NewMaxStat))
+		{
+			NewMaxStat = GetStatCapAmount(ItemStatBoost.StatType);
+		}
+
+		UnitState.SetBaseMaxStat(ItemStatBoost.StatType, NewMaxStat);
+		
+		if (ItemStatBoost.StatType != eStat_HP || !UnitState.IsInjured())
+		{
+			UnitState.SetCurrentStat(ItemStatBoost.StatType, NewMaxStat);
+		}
+	}
+
+	return true;
+}
+
+static function bool isUnitStatCapped(ECharStatType StatType, float StatAmount)
+{
+	local float StatCap;
+
+	StatCap = GetStatCapAmount(StatType);
+
+	if(StatAmount >= StatCap && StatCap != 0.0)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+static function float GetStatCapAmount(ECharStatType StatType)
+{
+	local int Index;
+	local float StatCap;
+
+	StatCap = 0.0;
+	Index = default.STAT_BOOST_CAP.Find('StatType', StatType);
+
+	if(Index == INDEX_NONE)
+	{
+		return StatCap;
+	}
+
+	return default.STAT_BOOST_CAP[Index].StatCap;
+}
+
 static function PatchRageStrike()
 {
 	local X2AbilityTemplateManager AbilityTemplateManager;
 	local array<X2DataTemplate> DifficulityVariants;
 	local X2DataTemplate DataTemplate;
 	local X2AbilityTemplate AbilityTemplate;
-	local X2AbilityToHitCalc_StandardAim StandardAim;
+	local X2AbilityToHitCalc_StandardMelee StandardMelee;
 
 	AbilityTemplateManager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
 
@@ -304,10 +410,9 @@ static function PatchRageStrike()
 
 		if (AbilityTemplate != none)
 		{
-			StandardAim = new class'X2AbilityToHitCalc_StandardAim';
-			StandardAim.bGuaranteedHit = true;
-			StandardAim.bMeleeAttack = true;
-			AbilityTemplate.AbilityToHitCalc = StandardAim;
+			StandardMelee = new class'X2AbilityToHitCalc_StandardMelee';
+			StandardMelee.bGuaranteedHit = true;
+			AbilityTemplate.AbilityToHitCalc = StandardMelee;
 		}
 	}
 }
@@ -345,6 +450,7 @@ static function PatchJustice()
 		}
 	}
 }
+
 
 static function PatchSuppression()
 {
@@ -481,6 +587,63 @@ static function PatchBullRush()
 	}
 }
 
+static function PatchRulerPauseTimer()
+{
+	local X2AbilityTemplateManager AbilityTemplateManager;
+	local array<X2DataTemplate> DifficulityVariants;
+	local X2DataTemplate DataTemplate;
+	local X2AbilityTemplate AbilityTemplate;
+	local X2Effect_SuspendMissionTimer MissionTimerEffect;
+	local X2Effect_SetUnitValue SetUnitValue;
+
+	AbilityTemplateManager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
+
+	AbilityTemplateManager.FindDataTemplateAllDifficulties('AlienRulerEscape', DifficulityVariants);
+
+	foreach DifficulityVariants(DataTemplate)
+	{
+		AbilityTemplate = X2AbilityTemplate(DataTemplate);
+
+		if(AbilityTemplate != none)
+		{
+			MissionTimerEffect = new class'X2Effect_SuspendMissionTimer';
+			MissionTimerEffect.bResumeMissionTimer = true;
+			AbilityTemplate.AddShooterEffect(MissionTimerEffect);
+
+			SetUnitValue = new class'X2Effect_SetUnitValue';
+			SetUnitValue.UnitName = class'X2Ability_Tweaks'.default.RULER_STATE;
+			SetUnitValue.NewValueToSet = class'X2Ability_Tweaks'.default.RULER_DISABLED;
+			SetUnitValue.CleanupType = eCleanup_BeginTactical;
+			AbilityTemplate.AddShooterEffect(SetUnitValue);
+		}
+	}
+}
+
+static function PatchPounce()
+{
+	local X2AbilityTemplateManager AbilityTemplateManager;
+	local array<X2DataTemplate> DifficulityVariants;
+	local X2DataTemplate DataTemplate;
+	local X2AbilityTemplate AbilityTemplate;
+	local X2Condition_UnitProperty ShooterCondition;
+
+	AbilityTemplateManager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
+
+	AbilityTemplateManager.FindDataTemplateAllDifficulties('PounceTrigger', DifficulityVariants);
+
+	foreach DifficulityVariants(DataTemplate)
+	{
+		AbilityTemplate = X2AbilityTemplate(DataTemplate);
+
+		if(AbilityTemplate != none)
+		{
+			ShooterCondition = new class'X2Condition_UnitProperty';
+			ShooterCondition.ExcludeConcealed = true;
+			AbilityTemplate.AbilityShooterConditions.AddItem(ShooterCondition);
+		}
+	}
+}
+
 static function PatchDisruptorRifleAbility()
 {
 	local X2AbilityTemplateManager AbilityTemplateManager;
@@ -519,7 +682,12 @@ static function PatchDisruptorRifleAbility()
 			PersistentEffect = new class'X2Effect_ToHitModifier';
 			PersistentEffect.DuplicateResponse = eDupe_Ignore;
 			PersistentEffect.BuildPersistentEffect(1, true, false);
-			PersistentEffect.AddEffectHitModifier(eHit_Crit, class'X2Ability_XPackAbilitySet'.default.DISRUPTOR_RIFLE_PSI_CRIT, class'X2Ability_XPackAbilitySet'.default.DisruptorRifleCritDisplayText,,,,,,,,true);
+			PersistentEffect.AddEffectHitModifier(
+				eHit_Crit, 
+				class'X2Ability_XPackAbilitySet'.default.DISRUPTOR_RIFLE_PSI_CRIT, 
+				class'X2Ability_XPackAbilitySet'.default.DisruptorRifleCritDisplayText,
+				,,,,,,,
+				true);
 			PersistentEffect.ToHitConditions.AddItem(UnitProperty);
 
 			AbilityTemplate.AddTargetEffect(PersistentEffect);
@@ -583,6 +751,33 @@ function BetastrikeHPMod(XComGameState_Unit UnitState)
 		UnitState.SetBaseMaxStat(eStat_HP, Round(CurrentHealthMax * default.BETA_STRIKE_CHARACTERS[Idx].BetastrikeMod));
 		UnitState.SetCurrentStat(eStat_HP, UnitState.GetMaxStat(eStat_HP));
 		UnitState.SetUnitFloatValue('Betastrikemod', 2, eCleanup_Never);
+	}
+}
+
+static function PatchRulersTimer()
+{
+	local X2CharacterTemplateManager CharacterTemplateManager;
+	local array<X2DataTemplate> DifficulityVariants;
+	local X2DataTemplate DataTemplate;
+	local X2CharacterTemplate CharacterTemplate;
+	local AlienRulerData RulerData;
+
+	CharacterTemplateManager = class'X2CharacterTemplateManager'.static.GetCharacterTemplateManager();
+
+	foreach class'XComGameState_AlienRulerManager'.default.AlienRulerTemplates(RulerData)
+	{
+		CharacterTemplateManager.FindDataTemplateAllDifficulties(RulerData.AlienRulerTemplateName, DifficulityVariants);
+
+		foreach DifficulityVariants(DataTemplate)
+		{
+			CharacterTemplate = X2CharacterTemplate(DataTemplate);
+
+			if(CharacterTemplate != none)
+			{
+				CharacterTemplate.Abilities.AddItem('ResumeTimer');
+				CharacterTemplate.Abilities.AddItem('PauseTimer');
+			}
+		}
 	}
 }
 
