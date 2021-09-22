@@ -7,7 +7,6 @@ static function array<X2DataTemplate> CreateTemplates()
 	local array<X2DataTemplate> Templates;
 
 	Templates.AddItem(CreateValidateGTSClassTrainingListenerTemplate());
-	`log("Creating templates",, 'GTS Unlock Psionic');
 
 	return Templates;
 }
@@ -30,7 +29,6 @@ static function EventListenerReturn PsionicValidateGTSClassTraining(Object Event
 	local XComLWTuple Tuple;
 	local X2SoldierClassTemplate SoldierClassTemplate;
 
-	`log("Entering ELR",, 'GTS Unlock Psionic');
 	Tuple = XComLWTuple(EventData);
 
 	if (Tuple != none)
@@ -60,9 +58,6 @@ static private function bool SatisfyResearch()
 	local XComGameState_Tech TechState;
 	local bool SatisfyCondition;
 
-	`log("Entering SatisfyResearch",, 'GTS Unlock Psionic');
-	`log("Reading configured research unlocked" @ default.RESEARCH_UNLOCK_PSIONIC_CLASS[0],, 'GTS Unlock Psionic');
-
 	XComHQ = `XCOMHQ;
 	History = `XCOMHISTORY;
 
@@ -70,22 +65,12 @@ static private function bool SatisfyResearch()
 
 	foreach History.IterateByClassType(class'XComGameState_Tech', TechState)
 	{
-		`log("Searching research history:" @ TechState.GetMyTemplateName(),, 'GTS Unlock Psionic');
 		if(default.RESEARCH_UNLOCK_PSIONIC_CLASS.Find(TechState.GetMyTemplateName()) == INDEX_NONE)
 		{
 			continue;
 		}
 
-		if (XComHQ.TechIsResearched(TechState.GetReference()))
-		{
-			SatisfyCondition = true;
-			`log("TechIsResearched",, 'GTS Unlock Psionic');
-		}
-		else
-		{
-			SatisfyCondition = false;
-			`log("TechIsNotResearched",, 'GTS Unlock Psionic');
-		}
+		SatisfyCondition = XComHQ.TechIsResearched(TechState.GetReference()) ? true : false;
 	}
 
 	return SatisfyCondition;
