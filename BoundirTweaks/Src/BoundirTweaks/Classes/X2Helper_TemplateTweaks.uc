@@ -855,7 +855,7 @@ static function RemoveWeakness(XComGameState NewGameState, StateObjectReference 
 			break;
 		}
 
-		Roll = `SYNC_RAND(NumberChosenWeaknesses);
+		Roll = class'Engine'.static.GetEngine().SyncRand(NumberChosenWeaknesses, "RollForChosenWeakness");
 		ChosenState.RemoveTrait(ChosenWeaknesses[Roll].DataName);
 	}
 }
