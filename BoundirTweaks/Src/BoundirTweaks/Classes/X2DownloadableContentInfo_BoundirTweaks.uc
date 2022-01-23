@@ -16,6 +16,7 @@ static event OnPostTemplatesCreated()
 	OnPostAbilityTemplatesCreated();
 	OnPostItemTemplatesCreated();
 	OnPostCharacterTemplatesCreated();
+	OnPostStrategyCardTemplatesCreated();
 }
 
 static function OnPostStrategyTemplatesCreated()
@@ -71,6 +72,13 @@ static function OnPostCharacterTemplatesCreated()
 	// Adds Pause & Resume Timer abilities to Rulers
 	class'X2Helper_TemplateTweaks'.static.PatchRulersTimer();
 }
+
+static function OnPostStrategyCardTemplatesCreated()
+{
+	// When Chosen usually gain strength they will also lose weaknesses
+	class'X2Helper_TemplateTweaks'.static.TrainingRemovesWeaknesses();
+}
+
 
 static function bool AbilityTagExpandHandler(string InString, out string OutString)
 {

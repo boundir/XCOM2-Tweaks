@@ -15,6 +15,7 @@ struct StatBoostCap
 
 var config(GameData) array<name> DISABLE_DARK_EVENTS;
 var config(GameData) array<StatBoostCap> STAT_BOOST_CAP;
+var config(GameData) int NUM_WEAKNESSES;
 
 var config(GameData_SoldierSkills) float REVEAL_RANGE_METERS;
 var config(GameData_SoldierSkills) array<name> VANISH_ABILITIES;
@@ -819,7 +820,87 @@ static function PatchRulersTimer()
 	}
 }
 
+static function TrainingRemovesWeaknesses()
+{
+	local X2ChosenActionTemplate ChosenTrainingAction;
+
+	ChosenTrainingAction = X2ChosenActionTemplate(class'X2StrategyElementTemplateManager'.static.GetStrategyElementTemplateManager().FindStrategyElementTemplate('ChosenAction_Training'));
+
+	if(ChosenTrainingAction != none)
+	{
+		class'ChosenTrainingDecorator'.static.PrepareTraining(ChosenTrainingAction, RemoveWeakness);
+	}
+}
+
+static function RemoveWeakness(XComGameState NewGameState, StateObjectReference InRef, optional bool bReactivate = false)
+{
+	local XComGameState_ChosenAction ActionState;
+	local XComGameState_AdventChosen ChosenState;
+	local array<X2AbilityTemplate> ChosenWeaknesses;
+	local int idx;
+	local int NumberChosenWeaknesses;
+	local int Roll;
+
+	ActionState = GetAction(InRef, NewGameState);
+	ChosenState = GetChosen(ActionState.ChosenRef, NewGameState);
+
+	ChosenWeaknesses = ChosenState.GetChosenWeaknesses();
+
+	for(idx = 0; idx < default.NUM_WEAKNESSES; idx++)
+	{
+		NumberChosenWeaknesses = ChosenWeaknesses.Length;
+
+		if(NumberChosenWeaknesses == 0)
+		{
+			break;
+		}
+
+		Roll = `SYNC_RAND(NumberChosenWeaknesses);
+		ChosenState.RemoveTrait(ChosenWeaknesses[Roll].DataName);
+	}
+}
+
+//#############################################################################################
+//----------------   HELPERS  -----------------------------------------------------------------
+//#############################################################################################
+
 static function bool ReturnFalse()
 {
 	return false;
+}
+
+static function XComGameState_ChosenAction GetAction(StateObjectReference ActionRef, optional XComGameState NewGameState = none)
+{
+	local XComGameStateHistory History;
+	local XComGameState_ChosenAction ActionState;
+
+	if(NewGameState == none)
+	{
+		History = `XCOMHISTORY;
+		ActionState = XComGameState_ChosenAction(History.GetGameStateForObjectID(ActionRef.ObjectID));
+	}
+	else
+	{
+		ActionState = XComGameState_ChosenAction(NewGameState.ModifyStateObject(class'XComGameState_ChosenAction', ActionRef.ObjectID));
+	}
+
+	return ActionState;
+}
+
+static function XComGameState_AdventChosen GetChosen(StateObjectReference ChosenRef, optional XComGameState NewGameState = none)
+{
+	local XComGameStateHistory History;
+	local XComGameState_AdventChosen ChosenState;
+
+	if(NewGameState == none)
+	{
+		History = `XCOMHISTORY;
+		ChosenState = XComGameState_AdventChosen(History.GetGameStateForObjectID(ChosenRef.ObjectID));
+	}
+	else
+	{
+		ChosenState = XComGameState_AdventChosen(NewGameState.ModifyStateObject(class'XComGameState_AdventChosen', ChosenRef.ObjectID));
+	}
+
+	return ChosenState;
 }
