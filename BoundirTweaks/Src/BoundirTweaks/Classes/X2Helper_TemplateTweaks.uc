@@ -32,9 +32,13 @@ var config(Ammo) int NULL_DMGMOD;
 var config(Ammo) int NULL_NONPSIONIC_DMGMOD;
 
 
+// ========================
+// #   STRATEGY CHANGES   #
+// ========================
+
 static function DisableDarkEvents()
 {
-	local X2StrategyElementTemplateManager	StrategyTemplateManager;
+	local X2StrategyElementTemplateManager StrategyTemplateManager;
 	local array<X2DataTemplate> DifficulityVariants;
 	local X2DataTemplate DataTemplate;
 	local X2DarkEventTemplate DarkEventTemplate;
@@ -62,6 +66,36 @@ static function bool CantActivate(XComGameState_DarkEvent DarkEventState)
 {
 	return ReturnFalse();
 }
+
+static function ExcludeRulersFromSitrep(Name SitRepName)
+{
+	local X2SitRepTemplate SitRepTemplate;
+	local AlienRulerData RulerData;
+	local AlienRulerAdditionalTags AdditionalTag;
+
+	SitRepTemplate = class'X2SitRepTemplateManager'.static.GetSitRepTemplateManager().FindSitRepTemplate(SitRepName);
+
+	foreach class'XComGameState_AlienRulerManager'.default.AlienRulerTemplates(RulerData)
+	{
+		// Check if we already have the tag excluded.
+		if(SitRepTemplate.ExcludeGameplayTags.Find(RulerData.ActiveTacticalTag) != INDEX_NONE)
+		{
+			continue;
+		}
+
+		SitRepTemplate.ExcludeGameplayTags.AddItem(RulerData.ActiveTacticalTag);
+
+		foreach RulerData.AdditionalTags(AdditionalTag)
+		{
+			SitRepTemplate.ExcludeGameplayTags.AddItem(AdditionalTag.TacticalTag);
+		}
+	}
+}
+
+
+// ====================
+// #   ITEM CHANGES   #
+// ====================
 
 static function PatchWeaponThrown()
 {
@@ -391,6 +425,10 @@ static function float GetStatCapAmount(ECharStatType StatType)
 
 	return default.STAT_BOOST_CAP[Index].StatCap;
 }
+
+// =======================
+// #   ABILITY CHANGES   #
+// =======================
 
 static function PatchRageStrike()
 {

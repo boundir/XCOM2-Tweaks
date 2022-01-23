@@ -22,6 +22,9 @@ static function OnPostStrategyTemplatesCreated()
 {
 	// Prevent DE from spawning
 	class'X2Helper_TemplateTweaks'.static.DisableDarkEvents();
+	// Prevent Rulers from spawning when Lost are in play
+	class'X2Helper_TemplateTweaks'.static.ExcludeRulersFromSitrep('TheLost');
+	class'X2Helper_TemplateTweaks'.static.ExcludeRulersFromSitrep('TheHorde');
 }
 
 static function OnPostAbilityTemplatesCreated()
