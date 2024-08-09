@@ -15,6 +15,6 @@
     - teleport removes suppression.
     - abilities you can't use while suppressed (Suppression, Stealth, Vanish, SitRepStealth, Shadow, DistractionShadow, RefractionFieldAbility)
 - Berserker EU can only use Bull Rush on XCOM turn.
-- Rulers pause timers.
+- Ruler activation will pause timers. Ruler escaping or killed will resume it.
 - Pounce from More Trait mod can't trigger while concealed.
-- Change Axe Thrown damage type to DefaultProjectile
+- Change Axe Thrown damage type to DefaultProjectile so it doesn't inflict melee damages.

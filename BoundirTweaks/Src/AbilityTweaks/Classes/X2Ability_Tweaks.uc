@@ -1,9 +1,13 @@
 class X2Ability_Tweaks extends X2Ability config(GameCore);
 
-var Name RULER_STATE;
+var name RULER_STATE;
 
-var int RULER_ACTIVATED;
-var int RULER_DISABLED;
+enum ERulerEngagement
+{
+	ERulerEngagement_Unknown,
+	ERulerEngagement_Activated,
+	ERulerEngagement_Disabled
+};
 
 var config int REPEATER_M1_CRIT_DMG;
 var config int REPEATER_M2_CRIT_DMG;
@@ -72,7 +76,7 @@ static function X2AbilityTemplate CreateResumeTimer()
 	Template.AbilityTriggers.AddItem(EventListener);
 
 	ActivatedValueNotSet = new class'X2Condition_UnitValue';
-	ActivatedValueNotSet.AddCheckValue(default.RULER_STATE, default.RULER_ACTIVATED, eCheck_Exact);
+	ActivatedValueNotSet.AddCheckValue(default.RULER_STATE, ERulerEngagement_Activated, eCheck_Exact);
 	Template.AbilityShooterConditions.AddItem(ActivatedValueNotSet);
 
 	MissionTimerEffect = new class'X2Effect_SuspendMissionTimer';
@@ -81,7 +85,7 @@ static function X2AbilityTemplate CreateResumeTimer()
 
 	SetUnitValue = new class'X2Effect_SetUnitValue';
 	SetUnitValue.UnitName = default.RULER_STATE;
-	SetUnitValue.NewValueToSet = default.RULER_DISABLED;
+	SetUnitValue.NewValueToSet = ERulerEngagement_Disabled;
 	SetUnitValue.CleanupType = eCleanup_BeginTactical;
 	Template.AddShooterEffect(SetUnitValue);
 
@@ -118,7 +122,7 @@ static function X2AbilityTemplate CreatePauseTimer()
 	Template.AbilityShooterConditions.AddItem(default.LivingShooterProperty);
 
 	ActivatedValueNotSet = new class'X2Condition_UnitValue';
-	ActivatedValueNotSet.AddCheckValue(default.RULER_STATE, default.RULER_DISABLED, eCheck_Exact);
+	ActivatedValueNotSet.AddCheckValue(default.RULER_STATE, ERulerEngagement_Disabled, eCheck_Exact);
 	Template.AbilityShooterConditions.AddItem(ActivatedValueNotSet);
 
 	MissionTimerEffect = new class'X2Effect_SuspendMissionTimer';
@@ -127,7 +131,7 @@ static function X2AbilityTemplate CreatePauseTimer()
 
 	SetUnitValue = new class'X2Effect_SetUnitValue';
 	SetUnitValue.UnitName = default.RULER_STATE;
-	SetUnitValue.NewValueToSet = default.RULER_ACTIVATED;
+	SetUnitValue.NewValueToSet = ERulerEngagement_Activated;
 	SetUnitValue.CleanupType = eCleanup_BeginTactical;
 	Template.AddShooterEffect(SetUnitValue);
 
@@ -140,10 +144,6 @@ static function X2AbilityTemplate CreatePauseTimer()
 	return Template;
 }
 
-
-/*
- * Event Listeners
- */
 static function EventListenerReturn RulerDefeatedListener(Object EventData, Object EventSource, XComGameState GameState, Name Event, Object CallbackData)
 {
 	local XComGameState_Unit KilledUnit;
@@ -182,7 +182,7 @@ static function EventListenerReturn ActivateRulerEngaged(Object EventData, Objec
 	RulerState = XComGameState_Unit(History.GetGameStateForObjectID(SourceAbilityState.OwnerStateObject.ObjectID));
 	RulerState.GetUnitValue(default.RULER_STATE, RulerStateValue);
 
-	if(RulerStateValue.fValue == default.RULER_ACTIVATED)
+	if(RulerStateValue.fValue == ERulerEngagement_Activated)
 	{
 		return ELR_NoInterrupt;
 	}
@@ -197,7 +197,7 @@ static function EventListenerReturn ActivateRulerEngaged(Object EventData, Objec
 			if( EnemyViewerInfo.bClearLOS )
 			{
 				EnemyState = XComGameState_Unit(History.GetGameStateForObjectID(EnemyViewerInfo.SourceID));
-				if( !EnemyState.IsConcealed() )     
+				if( !EnemyState.IsConcealed() )
 				{
 					bVisible = true;
 					break;
@@ -219,6 +219,4 @@ static function EventListenerReturn ActivateRulerEngaged(Object EventData, Objec
 defaultProperties
 {
 	RULER_STATE = "RulerEngaged"
-	RULER_ACTIVATED = 1
-	RULER_DISABLED = -1
 }

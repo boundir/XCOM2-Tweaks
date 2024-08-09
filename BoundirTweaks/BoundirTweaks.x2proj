@@ -3,56 +3,62 @@
   <PropertyGroup>
     <Guid>2dbb6570-feaa-4b14-a46c-72352342994e</Guid>
     <Name>BoundirTweaks</Name>
-    <Description>Description of My XCOM 2 Mod.</Description>
+    <Description>Compilation of alterations</Description>
     <SteamPublishID>0</SteamPublishID>
     <AssemblyName>BoundirTweaks</AssemblyName>
     <RootNamespace>BoundirTweaks</RootNamespace>
+    <ProjectGuid>{0af76865-887b-4f13-9ac2-7cc813928efc}</ProjectGuid>
   </PropertyGroup>
+  <PropertyGroup>
+    <SolutionRoot>$(MSBuildProjectDirectory)\..\</SolutionRoot>
+    <ScriptsDir>$(SolutionRoot).scripts\</ScriptsDir>
+    <BuildCommonRoot>$(ScriptsDir)X2ModBuildCommon\</BuildCommonRoot>
+  </PropertyGroup>
+  <!-- <Import Project="$(BuildCommonRoot)XCOM2.targets" /> -->
+  <Import Project="$(MSBuildLocalExtensionPath)\XCOM2.targets" />
   <ItemGroup>
     <Folder Include="Config\" />
     <Folder Include="Localization\" />
     <Folder Include="Src\" />
-    <Folder Include="Src\BoundirTweaks\" />
-    <Folder Include="Src\BoundirTweaks\Classes\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Config\XComGameCore.ini">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Config\XComGameData.ini">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Config\XComGameData_SoldierSkills.ini">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="ReadMe.txt" />
-    <Content Include="ModPreview.jpg" />
+    <Folder Include="Src\AbilityTweaks\" />
+    <Folder Include="Src\AbilityTweaks\Classes\" />
+    <Folder Include="Src\CharacterTweaks\" />
+    <Folder Include="Src\CharacterTweaks\Classes\" />
+    <Folder Include="Src\ItemTweaks\" />
+    <Folder Include="Src\ItemTweaks\Classes\" />
+    <Folder Include="Src\StrategyTweaks\" />
+    <Folder Include="Src\StrategyTweaks\Classes\" />
+    <Folder Include="Src\TacticalTweaks\" />
+    <Folder Include="Src\TacticalTweaks\Classes\" />
+    <Folder Include="Src\Utilities\" />
+    <Folder Include="Src\Utilities\Classes\" />
     <Content Include="Config\XComEditor.ini" />
     <Content Include="Config\XComEngine.ini" />
     <Content Include="Config\XComGame.ini" />
+    <Content Include="Config\XComGameCore.ini" />
+    <Content Include="Config\XComGameData_SoldierSkills.ini" />
+    <Content Include="Config\XComGameData.ini" />
+    <Content Include="ReadMe.txt" />
+    <Content Include="ModPreview.jpg" />
+    <Content Include="Localization\BoundirTweaks.int" />
     <Content Include="Localization\XComGame.int" />
-    <Content Include="Src\BoundirTweaks\Classes\ChosenTrainingDecorator.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\BoundirTweaks\Classes\X2Ability_Tweaks.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\BoundirTweaks\Classes\X2Condition_OnTeamTurn.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\BoundirTweaks\Classes\X2Condition_UnitPropertyTweak.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\BoundirTweaks\Classes\X2DownloadableContentInfo_BoundirTweaks.uc" />
-    <Content Include="Src\BoundirTweaks\Classes\X2Effect_BetterRepeater.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\BoundirTweaks\Classes\X2EventListener_GTSTrainingTweak.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\BoundirTweaks\Classes\X2Helper_TemplateTweaks.uc">
-      <SubType>Content</SubType>
-    </Content>
+    <Content Include="Src\extra_globals.uci" />
+    <Content Include="Src\Utilities\Classes\BoundirTweaks_CallbackHandler.uc" />
+    <Content Include="Src\Utilities\Classes\Helper_Tweaks.uc" />
+    <Content Include="Src\Utilities\Classes\UIScreenListener_KeybindingTweaks.uc" />
+    <Content Include="Src\Utilities\Classes\X2DownloadableContentInfo_BoundirTweaks.uc" />
+    <Content Include="Src\AbilityTweaks\Classes\X2Ability_Tweaks.uc" />
+    <Content Include="Src\AbilityTweaks\Classes\X2DownloadableContentInfo_AbilityTweaks.uc" />
+    <Content Include="Src\AbilityTweaks\Classes\X2Effect_BetterRepeater.uc" />
+    <Content Include="Src\CharacterTweaks\Classes\X2DownloadableContentInfo_CharacterTweaks.uc" />
+    <Content Include="Src\ItemTweaks\Classes\X2DownloadableContentInfo_ItemTweaks.uc" />
+    <Content Include="Src\StrategyTweaks\Classes\ChosenTrainingDecorator.uc" />
+    <Content Include="Src\StrategyTweaks\Classes\DarkEventActivationRestrictionDecorator.uc" />
+    <Content Include="Src\StrategyTweaks\Classes\X2DownloadableContentInfo_StrategyTweaks.uc" />
+    <Content Include="Src\StrategyTweaks\Classes\X2EventListener_GTSTrainingTweak.uc" />
+    <Content Include="Src\StrategyTweaks\Classes\X2EventListener_SoldierManagementTweak.uc" />
+    <Content Include="Src\TacticalTweaks\Classes\X2Condition_OnTeamTurn.uc" />
+    <Content Include="Src\TacticalTweaks\Classes\X2Condition_UnitPropertyTweak.uc" />
+    <Content Include="Src\TacticalTweaks\Classes\X2EventListener_TimerStartsOnSquadRevealed.uc" />
   </ItemGroup>
-  <Import Project="$(MSBuildLocalExtensionPath)\XCOM2.targets" />
 </Project>

@@ -1,7 +1,10 @@
 class ChosenTrainingDecorator extends Object;
 
-var delegate <X2GameplayMutatorTemplate.OnActivatedDelegate> ActivateTraining; // Base game behavior or modded altered version
+var delegate <X2GameplayMutatorTemplate.OnActivatedDelegate> ActivateTraining;
 var delegate <X2GameplayMutatorTemplate.OnActivatedDelegate> RemoveChosenWeakness;
+
+var delegate bool CanActivateDarkEvent;
+var delegate bool ChosenHasWeaknesses;
 
 function ActivateStrongerTraining(XComGameState NewGameState, StateObjectReference InRef, optional bool bReactivate = false)
 {

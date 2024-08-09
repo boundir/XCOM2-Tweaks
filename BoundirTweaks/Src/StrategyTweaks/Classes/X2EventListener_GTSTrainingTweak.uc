@@ -75,4 +75,3 @@ static private function bool SatisfyResearch()
 
 	return SatisfyCondition;
 }
-

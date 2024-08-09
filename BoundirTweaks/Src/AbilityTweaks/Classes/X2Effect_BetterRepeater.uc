@@ -9,6 +9,8 @@ function int GetAttackingDamageModifier(XComGameState_Effect EffectState, XComGa
 	local X2Effect_ApplyWeaponDamage WeaponDamageEffect;
 	local int DamageMod;
 
+	DamageMod = 0;
+
 	if (class'XComGameStateContext_Ability'.static.IsHitResultHit(AppliedData.AbilityResultContext.HitResult))
 	{
 		WeaponDamageEffect = X2Effect_ApplyWeaponDamage(class'X2Effect'.static.GetX2Effect(AppliedData.EffectRef));
@@ -35,12 +37,12 @@ function int GetAttackingDamageModifier(XComGameState_Effect EffectState, XComGa
 			return DamageMod;
 		}
 
-		DamageMod = (class'X2Item_DefaultUpgrades'.static.AreUpgradesEmpowered()) ? class'X2Ability_Tweaks'.default.REPEATER_EMPOWER_BONUS_DMG : 0;
-
 		if(AbilityState.SourceWeapon == EffectState.ApplyEffectParameters.ItemStateObjectRef)
 		{
 			if (AppliedData.AbilityResultContext.HitResult == eHit_Crit)
 			{
+				DamageMod = (class'X2Item_DefaultUpgrades'.static.AreUpgradesEmpowered()) ? class'X2Ability_Tweaks'.default.REPEATER_EMPOWER_BONUS_DMG : 0;
+
 				return DamageMod + BonusCritDmg;
 			}
 		}
