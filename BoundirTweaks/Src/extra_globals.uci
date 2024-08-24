@@ -1,9 +1,0 @@
-`define TweaksLog(msg) `Log(`msg, , 'TweaksLog')
-`define TweaksDebug(msg) `Log(`msg, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug')
-`define TweaksTrace(msg) `Log(`msg, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace')
-
-`define GetAbilityMngr class'Helper_Tweaks'.GetAbilityTemplateManager()
-`define GetCharMngr class'Helper_Tweaks'.GetCharacterTemplateManager()
-`define GetItemMngr class'Helper_Tweaks'.GetItemTemplateManager()
-`define GetSitRepMngr class'Helper_Tweaks'.GetSitRepTemplateManager()
-`define GetStratMngr class'Helper_Tweaks'.GetStrategyTemplateManager()
