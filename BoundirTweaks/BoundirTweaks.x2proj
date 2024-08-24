@@ -17,12 +17,13 @@
   <Import Project="$(BuildCommonRoot)XCOM2.targets" />
   <ItemGroup>
     <Folder Include="Config" />
-    <Folder Include="Config\EnvironmentalDamages" />
     <Folder Include="Config\EUBerserker" />
     <Folder Include="Localization" />
     <Folder Include="Src" />
     <Folder Include="Src\BoundirTweaks" />
     <Folder Include="Src\BoundirTweaks\Classes" />
+    <Folder Include="Src\WallClimbOverride" />
+    <Folder Include="Src\WallClimbOverride\Classes" />
     <Content Include="ModPreview.jpg" />
     <Content Include="ReadMe.md" />
     <Content Include="Config\XComEditor.ini" />
@@ -32,13 +33,6 @@
     <Content Include="Config\XComGameData.ini" />
     <Content Include="Config\XComGameData_SoldierSkills.ini" />
     <Content Include="Config\XComGameData_WeaponData.ini" />
-    <Content Include="Config\EnvironmentalDamages\XComABA_Settings.ini" />
-    <Content Include="Config\EnvironmentalDamages\XComAdvWarlock.ini" />
-    <Content Include="Config\EnvironmentalDamages\XComAshBlackIceCodexConfig.ini" />
-    <Content Include="Config\EnvironmentalDamages\XComAVData.ini" />
-    <Content Include="Config\EnvironmentalDamages\XComGameData_WeaponData.ini" />
-    <Content Include="Config\EnvironmentalDamages\XComMSData.ini" />
-    <Content Include="Config\EnvironmentalDamages\XComMutonHunter.ini" />
     <Content Include="Config\EUBerserker\XComAI.ini" />
     <Content Include="Localization\BoundirTweaks.int" />
     <Content Include="Localization\XComGame.int" />
@@ -61,5 +55,6 @@
     <Content Include="Src\BoundirTweaks\Classes\X2EventListener_CovertActionStaffSlotFilled.uc" />
     <Content Include="Src\BoundirTweaks\Classes\X2EventListener_GTSTrainingTweak.uc" />
     <Content Include="Src\BoundirTweaks\Classes\X2EventListener_TimerStartsOnSquadRevealed.uc" />
+    <Content Include="Src\WallClimbOverride\Classes\X2Action_MoveClimbWall_Override.uc" />
   </ItemGroup>
 </Project>

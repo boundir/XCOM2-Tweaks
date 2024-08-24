@@ -127,7 +127,10 @@ static function RemoveEasyToHitAbililty(X2CharacterTemplateManager CharacterTemp
 
 static function RemoveUnwantedLoot(X2CharacterTemplateManager CharacterTemplateManager)
 {
+	local array<X2DataTemplate> DifficulityVariants;
+	local X2DataTemplate DataTemplate;
 	local X2CharacterTemplate CharacterTemplate;
+	local X2CharacterTemplate SupplierCharacterTemplate;
 	local UnitLootReplacer Unit;
 
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');

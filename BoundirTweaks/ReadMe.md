@@ -40,5 +40,6 @@
 >
 >> #### Plans:
 >> - [x] Chosen action *Training* adds Strength and removes a number of weaknesses. *Require testing*.
+>> - [ ] Explosive destroy all corpses.
 >
 > ---
