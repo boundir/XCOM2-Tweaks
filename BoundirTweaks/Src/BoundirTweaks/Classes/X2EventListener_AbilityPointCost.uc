@@ -30,35 +30,14 @@ static function CHEventListenerTemplate CreateExponentialAbilityPurchaseCostTemp
 	return Template;
 }
 
-// EventData:
-// in name AbilityTemplateName,
-// in int iRank,
-// in int iRow,
-// in bool bPowerfulAbility,
-// in bool bColonelRankAbility,
-// in bool bClassAbility,
-// in bool bUnitMeetsAbilityPrerequisites,
-// in bool bUnitHasPurchasedClassPerkAtRank,
-// in bool bUnitMeetsRankRequirement,
-// in bool bUnitCanSpendAP,
-// in bool bAsResistanceHero,
-// in int AbilitiesPerRank,
-// inout int iAbilityPointCost],
-// EventSource: XComGameState_Unit (UnitState),
-// Soldier Progression
-// AbilityPointCosts[0]=0 ; Squaddie
-// AbilityPointCosts[1]=10 ; Corporal
-// AbilityPointCosts[2]=11 ; Sergeant
-// AbilityPointCosts[3]=12 ; Lieutenant
-// AbilityPointCosts[4]=13 ; Captain
-// AbilityPointCosts[5]=14 ; Major
-// AbilityPointCosts[6]=15 ; Colonel
 static function EventListenerReturn IncreaseAbilityPurchaseCostExponentially(Object EventData, Object EventSource, XComGameState GameState, Name InEventID, Object CallbackData)
 {
 	local XComGameState_Unit UnitState;
 	local XComLWTuple Tuple;
 	local int AdditionalAbilitiesPurchased;
 	local bool IsResistanceHero, IsPowerfulAbility;
+	local int Branch;
+	local int ClassAbilityRankCount;
 
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
 
@@ -71,6 +50,8 @@ static function EventListenerReturn IncreaseAbilityPurchaseCostExponentially(Obj
 
 	IsResistanceHero = Tuple.Data[10].b;
 	IsPowerfulAbility = Tuple.Data[3].b;
+	Branch = Tuple.Data[2].i;
+	ClassAbilityRankCount = Tuple.Data[11].i;
 
 	if (IsResistanceHero)
 	{
@@ -88,7 +69,7 @@ static function EventListenerReturn IncreaseAbilityPurchaseCostExponentially(Obj
 
 	Tuple.Data[12].i = Round(default.AbilityPointCostBase * (1 + default.AbilityPointCostGrowth) ** AdditionalAbilitiesPurchased);
 
-	if (IsPowerfulAbility)
+	if (IsPowerfulAbility && (Branch == ClassAbilityRankCount))
 	{
 		Tuple.Data[12].i += default.PowerfulAbilityAdditionalCost;
 	}

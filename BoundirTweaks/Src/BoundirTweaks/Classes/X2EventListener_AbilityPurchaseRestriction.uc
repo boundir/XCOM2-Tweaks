@@ -38,6 +38,7 @@ static function EventListenerReturn PsionicAbilityPurchase(Object EventData, Obj
 	local int Branch;
 	local int ClassAbilityRankCount;
 	local string ReasonLocked;
+	local bool PurchasedRankUpAbility;
 
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
 
@@ -58,8 +59,9 @@ static function EventListenerReturn PsionicAbilityPurchase(Object EventData, Obj
 	SoldierClass = UnitState.GetSoldierClassTemplateName();
 	Branch = Tuple.Data[2].i;
 	ClassAbilityRankCount = Tuple.Data[11].i;
+	PurchasedRankUpAbility = Tuple.Data[7].b;
 
-	if (Branch < ClassAbilityRankCount)
+	if (PurchasedRankUpAbility && (Branch < ClassAbilityRankCount))
 	{
 		if (default.CLASSES_CANT_PURCHASE_BONUS_ABILITIES.Find(SoldierClass) != INDEX_NONE)
 		{
