@@ -35,3 +35,15 @@ struct CovertActionStatRewardLimit
 	var float StatLimit;
 };
 
+struct FacilityPersonelManagement
+{
+	var name StaffName;
+	var bool StaffEngineer;
+	var bool StaffScientist;
+};
+
+struct WeaponBreakthrough
+{
+	var name BreakthroughName;
+	var array<name> WeaponCategories;
+};

@@ -1,4 +1,4 @@
-class X2DownloadableContentInfo_ItemTweaks extends X2DownloadableContentInfo;
+class X2DLCInfo_ItemTweaks extends X2DownloadableContentInfo;
 
 var config(Ammo) int NULL_DMGMOD;
 var config(Ammo) int NULL_NONPSIONIC_DMGMOD;
@@ -249,7 +249,6 @@ static function EnvironmentalDamageControl(X2ItemTemplateManager ItemTemplateMan
 	local X2WeaponTemplate ChangeWeaponTemplate;
 	local WeaponEnvironmentalDamageControl EnvironmentalDamageControl;
 	local WeaponEnvironmentalDamageControlException EnvironmentalDamageControlException;
-	local int ScanWeaponCategory;
 	local int ScanWeaponCategoryException;
 
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
@@ -269,35 +268,40 @@ static function EnvironmentalDamageControl(X2ItemTemplateManager ItemTemplateMan
 				continue;
 			}
 
-			ScanWeaponCategory = default.WEAPON_ENVIRONMENTAL_DAMAGE.Find('WeaponCategory', ChangeWeaponTemplate.WeaponCat);
-
-			if (ScanWeaponCategory == INDEX_NONE)
-			{
-				continue;
-			}
-
-			EnvironmentalDamageControl = default.WEAPON_ENVIRONMENTAL_DAMAGE[ScanWeaponCategory];
-
-			if (EnvironmentalDamageControl.Tech == '')
+			foreach default.WEAPON_ENVIRONMENTAL_DAMAGE(EnvironmentalDamageControl)
 			{
 				ScanWeaponCategoryException = EnvironmentalDamageControl.Exceptions.Find('Weapon', ChangeWeaponTemplate.DataName);
 
-				if (ScanWeaponCategoryException == INDEX_NONE)
+				if (ScanWeaponCategoryException != INDEX_NONE)
 				{
+					EnvironmentalDamageControlException = EnvironmentalDamageControl.Exceptions[ScanWeaponCategoryException];
+
+					`Log("Changing Environmental Damage from" @ ChangeWeaponTemplate.iEnvironmentDamage @ "to" @ EnvironmentalDamageControlException.EnvironmentDamage @ "for template" @ ChangeWeaponTemplate.DataName, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+
+					ChangeWeaponTemplate.iEnvironmentDamage = EnvironmentalDamageControlException.EnvironmentDamage;
+
+					continue;
+				}
+
+				if (EnvironmentalDamageControl.WeaponCategory != ChangeWeaponTemplate.WeaponCat)
+				{
+					continue;
+				}
+
+				if (EnvironmentalDamageControl.Tech == '')
+				{
+					`Log("Changing Environmental Damage from" @ ChangeWeaponTemplate.iEnvironmentDamage @ "to" @ EnvironmentalDamageControl.EnvironmentDamage @ "for template" @ ChangeWeaponTemplate.DataName, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+
 					ChangeWeaponTemplate.iEnvironmentDamage = EnvironmentalDamageControl.EnvironmentDamage;
 				}
 				else
 				{
-					EnvironmentalDamageControlException = EnvironmentalDamageControl.Exceptions[ScanWeaponCategoryException];
-					ChangeWeaponTemplate.iEnvironmentDamage = EnvironmentalDamageControlException.EnvironmentDamage;
-				}
+					if (ChangeWeaponTemplate.WeaponTech == EnvironmentalDamageControl.Tech)
+					{
+						`Log("Changing Environmental Damage from" @ ChangeWeaponTemplate.iEnvironmentDamage @ "to" @ EnvironmentalDamageControl.EnvironmentDamage @ "for template" @ ChangeWeaponTemplate.DataName, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
 
-			}
-			else
-			{
-				if (ChangeWeaponTemplate.WeaponTech == EnvironmentalDamageControl.Tech)
-				{
-					ChangeWeaponTemplate.iEnvironmentDamage = EnvironmentalDamageControl.EnvironmentDamage;
+						ChangeWeaponTemplate.iEnvironmentDamage = EnvironmentalDamageControl.EnvironmentDamage;
+					}
 				}
 			}
 		}

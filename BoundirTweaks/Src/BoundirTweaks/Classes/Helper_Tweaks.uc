@@ -7,6 +7,31 @@ var config bool EnableTrace;
 `define TweaksDebug(msg) `Log(`msg, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug')
 `define TweaksDebug(msg) `Log(`msg, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace')
 
+static function bool IsResistanceWarriorUnit(XComGameState_Unit UnitState)
+{
+	local XComGameState_Item ItemState;
+
+	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
+
+	ItemState = UnitState.GetItemInSlot(eInvSlot_Armor);
+
+	if (ItemState.GetMyTemplateName() != 'KevlarArmor_DLC_Day0')
+	{
+		return false;
+	}
+
+	return ((UnitState.kAppearance.nmHaircut == 'Classic_M' && UnitState.kAppearance.nmFacePropUpper == 'Aviators_M') ||
+		(UnitState.kAppearance.nmHaircut == 'Classic_F' && UnitState.kAppearance.nmFacePropUpper == 'Aviators_F')
+	);
+}
+
+static function bool IsUnitFromCharacterPool(XComGameState_Unit CharacterPoolUnit, XComGameState_Unit UnitState)
+{
+	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
+
+	return (CharacterPoolUnit != none && CharacterPoolUnit.GetNickName() == UnitState.GetNickName());
+}
+
 static function array<DarkEventAppearanceRestriction> FindDarkEventListByName(name DarkEvent, array<DarkEventAppearanceRestriction> DARK_EVENT_CONDITIONS)
 {
 	local DarkEventAppearanceRestriction DarkEventCondition;

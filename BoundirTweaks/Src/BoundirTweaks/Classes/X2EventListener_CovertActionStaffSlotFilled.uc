@@ -88,11 +88,7 @@ static function EventListenerReturn CanUnitGainReward(Object EventData, Object E
 		return ELR_NoInterrupt;
 	}
 
-	`Log("CovertAction Reward is" @ RewardState.GetMyTemplateName(), class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
-	`Log("CovertAction Unit is" @ UnitState.GetMyTemplateName(), class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
-	`Log("CovertAction Reward text is" @ Tuple.Data[0].s, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
-
-	ScanStatRewardLimit = class'X2DownloadableContentInfo_StrategyTweaks'.default.COVERT_ACTION_STAT_LIMIT.Find('RewardName', RewardState.GetMyTemplateName());
+	ScanStatRewardLimit = class'X2DLCInfo_StrategyTweaks'.default.COVERT_ACTION_STAT_LIMIT.Find('RewardName', RewardState.GetMyTemplateName());
 
 	if (ScanStatRewardLimit == INDEX_NONE)
 	{
@@ -101,18 +97,13 @@ static function EventListenerReturn CanUnitGainReward(Object EventData, Object E
 		return ELR_NoInterrupt;
 	}
 
-	StatRewardLimit = class'X2DownloadableContentInfo_StrategyTweaks'.default.COVERT_ACTION_STAT_LIMIT[ScanStatRewardLimit];
+	StatRewardLimit = class'X2DLCInfo_StrategyTweaks'.default.COVERT_ACTION_STAT_LIMIT[ScanStatRewardLimit];
 
 	StatType = StatRewardLimit.StatType;
 	StatLimit = StatRewardLimit.StatLimit;
 	UnitStat = int(UnitState.GetMaxStat(StatType));
 
-	`Log("StatType" @ StatType, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
-	`Log("StatLimit" @ StatLimit, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
-	`Log("UnitStat" @ UnitStat, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
-
 	StatBonus = class'Helper_Tweaks'.static.ExtractNumberFromString(Tuple.Data[0].s);
-	`Log("StatBonus" @ StatBonus, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
 
 	if (UnitStat + StatBonus > StatLimit)
 	{

@@ -37,9 +37,14 @@
 > - Replace loot from modded enemies to vanilla versions so we don't end up undesired items.
 > - Change environmental damage on weapons programmatically to help avoid missing some.
 > - Chosen Assassin acquire a form of Bladestorm that can't miss.
+> - Resistance Warrior additional character is pulled from the pool.
+> - Modify Weapon Breakthroughs condition to allow WeaponCat array.
+> - Don't apply base damages from Whiplash.
 >
 >> #### Plans:
 >> - [x] Chosen action *Training* adds Strength and removes a number of weaknesses. *Require testing*.
->> - [ ] Explosive destroy all corpses.
+>> - [x] Chosen Assassin's Bladestorm should only trigger once.
+>> - [x] Feedback resistance triggers once per attack. *Require testing*.
+>> - [x] Prevent [The MOCX Initiative](https://steamcommunity.com/sharedfiles/filedetails/?id=1129661000) by **RealityMachina** units to appear in retaliation missions.
 >
 > ---

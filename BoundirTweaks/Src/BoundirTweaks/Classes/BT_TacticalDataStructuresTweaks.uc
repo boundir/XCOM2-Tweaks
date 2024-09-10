@@ -26,3 +26,9 @@ struct UnitLootReplacer
 	var name Supplier;
 	var name Consumer;
 };
+
+struct AbilityEnvironmentalDamageControl
+{
+	var name AbilityName;
+	var int EnvironmentDamage;
+};

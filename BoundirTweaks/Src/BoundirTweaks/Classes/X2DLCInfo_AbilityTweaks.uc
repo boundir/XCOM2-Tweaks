@@ -1,10 +1,13 @@
-class X2DownloadableContentInfo_AbilityTweaks extends X2DownloadableContentInfo;
+class X2DLCInfo_AbilityTweaks extends X2DownloadableContentInfo;
 
 var config(GameData_SoldierSkills) array<name> UNIT_TYPE_UNAFFECTED_BY_DISRUPTOR_GUARANTEED_CRIT;
 var config(GameData_SoldierSkills) array<name> CLASSES_AFFECTED_BY_DISRUPTOR_GUARANTEED_CRIT;
 
 var config(GameData_SoldierSkills) array<name> ABILITY_UNAVAILABLE_UNDER_SUPPRESSION;
 var config(GameData_SoldierSkills) array<name> ABILITY_REMOVE_SUPPRESSION;
+var config(GameData_SoldierSkills) array<name> ABILITY_IGNORE_BASE_WEAPON_DAMAGE;
+
+var config(GameData_SoldierSkills) array<AbilityEnvironmentalDamageControl> ABILITY_ENVIRONMENTAL_DAMAGE;
 
 static event OnPostTemplatesCreated()
 {
@@ -15,19 +18,9 @@ static event OnPostTemplatesCreated()
 	AbilityTemplateManager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
 
 	RageStrikeIsMeleeAttack(AbilityTemplateManager);
-	ModifyJusticeEnvironmentalDamage(AbilityTemplateManager);
+	ControlAbilityEnvironmentalDamage(AbilityTemplateManager);
 
 	RemoveSuppressionEffectOnAbilityTriggered(AbilityTemplateManager);
-	RemoveSuppressionEffectOnAbilityTriggered(AbilityTemplateManager);
-	RemoveSuppressionEffectOnAbilityTriggered(AbilityTemplateManager);
-	RemoveSuppressionEffectOnAbilityTriggered(AbilityTemplateManager);
-
-	CantUseAbilityUnderSuppression(AbilityTemplateManager);
-	CantUseAbilityUnderSuppression(AbilityTemplateManager);
-	CantUseAbilityUnderSuppression(AbilityTemplateManager);
-	CantUseAbilityUnderSuppression(AbilityTemplateManager);
-	CantUseAbilityUnderSuppression(AbilityTemplateManager);
-	CantUseAbilityUnderSuppression(AbilityTemplateManager);
 	CantUseAbilityUnderSuppression(AbilityTemplateManager);
 
 	ReworkEUBerserkerBullRush(AbilityTemplateManager);
@@ -37,6 +30,9 @@ static event OnPostTemplatesCreated()
 
 	RecreateDevastatingPunchAtMeleeRange(AbilityTemplateManager);
 	RecreateBladestormAssassinAttack(AbilityTemplateManager);
+
+	FeedbackCanOnlyTriggerOnce(AbilityTemplateManager);
+	IgnoreBaseWeaponDamage(AbilityTemplateManager);
 }
 
 static function RageStrikeIsMeleeAttack(X2AbilityTemplateManager AbilityTemplateManager)
@@ -58,32 +54,36 @@ static function RageStrikeIsMeleeAttack(X2AbilityTemplateManager AbilityTemplate
 	AbilityTemplate.AbilityToHitCalc = StandardMelee;
 }
 
-static function ModifyJusticeEnvironmentalDamage(X2AbilityTemplateManager AbilityTemplateManager)
+static function ControlAbilityEnvironmentalDamage(X2AbilityTemplateManager AbilityTemplateManager)
 {
 	local X2AbilityTemplate AbilityTemplate;
 	local X2Effect Effect;
 	local X2Effect_ApplyWeaponDamage WeaponEffect;
+	local AbilityEnvironmentalDamageControl EnvironmentalDamageControl;
 
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
 
-	AbilityTemplate = AbilityTemplateManager.FindAbilityTemplate('Justice');
-
-	if (AbilityTemplate == none)
+	foreach default.ABILITY_ENVIRONMENTAL_DAMAGE(EnvironmentalDamageControl)
 	{
-		return;
-	}
+		AbilityTemplate = AbilityTemplateManager.FindAbilityTemplate(EnvironmentalDamageControl.AbilityName);
 
-	foreach AbilityTemplate.AbilityTargetEffects(Effect)
-	{
-		if (Effect == none)
+		if (AbilityTemplate == none)
 		{
 			continue;
 		}
 
-		if (Effect.IsA('X2Effect_ApplyWeaponDamage'))
+		foreach AbilityTemplate.AbilityTargetEffects(Effect)
 		{
 			WeaponEffect = X2Effect_ApplyWeaponDamage(Effect);
-			WeaponEffect.EnvironmentalDamageAmount = 3;
+
+			if (WeaponEffect == none)
+			{
+				continue;
+			}
+
+			WeaponEffect.EnvironmentalDamageAmount = EnvironmentalDamageControl.EnvironmentDamage;
+
+			`Log("Changing Environmental Damage from" @ AbilityTemplate.EnvironmentalDamageAmount @ "to" @ EnvironmentalDamageControl.EnvironmentDamage @ "for template" @ AbilityTemplate.DataName, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
 		}
 	}
 }
@@ -291,6 +291,8 @@ static function RecreateBladestormAssassinAttack(X2AbilityTemplateManager Abilit
 	local X2AbilityTemplate OriginalAbilityTemplate;
 	local X2AbilityTemplate AbilityTemplate;
 	local X2AbilityToHitCalc_StandardMelee ToHitCalc;
+	local X2Effect_Persistent ActivatedEffect;
+	local X2Condition_UnitEffectsWithAbilitySource ExcludeEffectsCondition;
 
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
 
@@ -314,6 +316,87 @@ static function RecreateBladestormAssassinAttack(X2AbilityTemplateManager Abilit
 	ToHitCalc.bReactionFire = true;
 	ToHitCalc.bGuaranteedHit = true;
 	AbilityTemplate.AbilityToHitCalc = ToHitCalc;
+
+	ExcludeEffectsCondition = new class'X2Condition_UnitEffectsWithAbilitySource';
+	ExcludeEffectsCondition.AddExcludeEffect('BladestormAssassinActivated', 'AA_DuplicateEffectIgnored');
+	AbilityTemplate.AbilityShooterConditions.AddItem(ExcludeEffectsCondition);
+
+	ActivatedEffect = new class'X2Effect_Persistent';
+	ActivatedEffect.EffectName = 'BladestormAssassinActivated';
+	ActivatedEffect.BuildPersistentEffect(1, true, false, true);
+	ActivatedEffect.DuplicateResponse = eDupe_Ignore;
+	AbilityTemplate.AddTargetEffect(ActivatedEffect);
+}
+
+static function FeedbackCanOnlyTriggerOnce(X2AbilityTemplateManager AbilityTemplateManager)
+{
+	local X2AbilityTemplate AbilityTemplate;
+	local X2Effect_Persistent ActivatedEffect;
+	local X2Condition_UnitEffectsWithAbilitySource ExcludeEffectsCondition;
+
+	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
+
+	AbilityTemplate = AbilityTemplateManager.FindAbilityTemplate('Feedback');
+
+	if (AbilityTemplate == none)
+	{
+		return;
+	}
+
+	ExcludeEffectsCondition = new class'X2Condition_UnitEffectsWithAbilitySource';
+	ExcludeEffectsCondition.AddExcludeEffect('FeedbackActivated', 'AA_DuplicateEffectIgnored');
+	AbilityTemplate.AbilityShooterConditions.AddItem(ExcludeEffectsCondition);
+
+	ActivatedEffect = new class'X2Effect_Persistent';
+	ActivatedEffect.EffectName = 'FeedbackActivated';
+	ActivatedEffect.BuildPersistentEffect(1, true, false, true);
+	ActivatedEffect.DuplicateResponse = eDupe_Ignore;
+	AbilityTemplate.AddTargetEffect(ActivatedEffect);
+}
+
+static function IgnoreBaseWeaponDamage(X2AbilityTemplateManager AbilityTemplateManager)
+{
+	local X2AbilityTemplate AbilityTemplate;
+	local X2Effect TargetEffect;
+	local X2Effect MultiTargetEffect;
+	local X2Effect_ApplyWeaponDamage WeaponDamageEffect;
+	local name AbilityName;
+
+	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
+
+	foreach default.ABILITY_IGNORE_BASE_WEAPON_DAMAGE(AbilityName)
+	{
+		AbilityTemplate = AbilityTemplateManager.FindAbilityTemplate(AbilityName);
+
+		if (AbilityTemplate == none)
+		{
+			continue;
+		}
+
+		foreach AbilityTemplate.AbilityTargetEffects(TargetEffect)
+		{
+			WeaponDamageEffect = X2Effect_ApplyWeaponDamage(TargetEffect);
+
+			if (WeaponDamageEffect == none)
+			{
+				continue;
+			}
+
+			WeaponDamageEffect.bIgnoreBaseDamage = true;
+		}
+
+		foreach AbilityTemplate.AbilityMultiTargetEffects(MultiTargetEffect)
+		{
+			WeaponDamageEffect = X2Effect_ApplyWeaponDamage(MultiTargetEffect);
+
+			if (WeaponDamageEffect == none)
+			{
+				continue;
+			}
+
+			WeaponDamageEffect.bIgnoreBaseDamage = true;
+		}
+	}
 }
 
 static function bool AbilityTagExpandHandler(string InString, out string OutString)

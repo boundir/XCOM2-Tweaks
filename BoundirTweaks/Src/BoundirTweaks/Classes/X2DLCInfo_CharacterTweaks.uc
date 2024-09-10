@@ -1,9 +1,16 @@
-class X2DownloadableContentInfo_CharacterTweaks extends X2DownloadableContentInfo;
+class X2DLCInfo_CharacterTweaks extends X2DownloadableContentInfo;
 
 var config(GameData_SoldierSkills) array<name> GRANT_BLADESTORM_GUARANTEED_HIT;
 var config(GameData_SoldierSkills) array<name> NOT_EASY_TO_HIT;
 
 var config(GameCore) array<UnitLootReplacer> SUPPLANT_LOOT_UNITS;
+
+static private function X2DLCInfo_CharacterTweaks GetClassDefaultObject()
+{
+	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
+
+	return X2DLCInfo_CharacterTweaks(class'XComEngine'.static.GetClassDefaultObjectByName(default.Class.Name));
+}
 
 static event OnPostTemplatesCreated()
 {
