@@ -6,7 +6,7 @@ var config(GameData) int CHOSEN_WEAKNESSES_REMOVED_BY_TRAINING;
 var config(GameData) array<CovertActionStatRewardLimit> COVERT_ACTION_STAT_LIMIT;
 var config(GameData) array<FacilityPersonelManagement> FACILITY_PERSONEL_MANAGEMENT;
 var config(GameData) array<WeaponBreakthrough> WEAPON_BREAKTHROUGH;
-var config(GameData) array<name> FORBID_MOCX_FROM_MISSION_TYPE;
+var config(GameData) array<string> FORBID_MOCX_FROM_MISSION_TYPE;
 
 static private function X2DLCInfo_StrategyTweaks GetClassDefaultObject()
 {
@@ -203,7 +203,7 @@ static function AllowCategoryListOnWeaponBreakthroughs(X2StrategyElementTemplate
 			continue;
 		}
 
-		`Log(TechTemplate.DataName @ "is being modified", default.EnableDebug, 'TweaksDebug');
+		`Log(TechTemplate.DataName @ "is being modified", class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
 
 		WeaponTypeCondition = new class'X2BreakthroughCondition_WeaponTypeTweak';
 		WeaponTypeCondition.WeaponTypesMatch = Breakthrough.WeaponCategories;
@@ -221,7 +221,7 @@ static function MOCXNotAllowedInRetaliationMission()
 {
 	local XComTacticalMissionManager MissionManager;
 	local MissionDefinition MissionDefinition;
-	local name MissionType;
+	local string MissionType;
 	local int Scan;
 
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
@@ -230,16 +230,16 @@ static function MOCXNotAllowedInRetaliationMission()
 
 	foreach default.FORBID_MOCX_FROM_MISSION_TYPE(MissionType)
 	{
-		Scan = MissionManager.arrMissions.Find('sType', MissionType)
+		Scan = MissionManager.arrMissions.Find('sType', MissionType);
 
 		if (Scan == INDEX_NONE)
 		{
 			continue;
 		}
 
-		`Log("Prevent MOCX from appearing in" @ MissionDefinition.arrMissions[Scan].MissionName, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+		`Log("Prevent MOCX from appearing in" @ MissionManager.arrMissions[Scan].MissionName, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
 
-		MissionDefinition.arrMissions[Scan].ForcedTacticalTags.AddItem('NoMOCX');
+		MissionManager.arrMissions[Scan].ForcedTacticalTags.AddItem('NoMOCX');
 	}
 
 }

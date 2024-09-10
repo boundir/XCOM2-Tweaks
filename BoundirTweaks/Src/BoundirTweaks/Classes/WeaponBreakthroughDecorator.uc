@@ -14,7 +14,7 @@ function ResearchCompleted(XComGameState NewGameState, XComGameState_Tech TechSt
 
 	foreach WeaponCategories(WeaponCategory)
 	{
-		`Log(WeaponCategory @ "weapon category benefits from breakthrough" @ TechState.GetMyTemplateName(), default.EnableDebug, 'TweaksDebug');
+		`Log(WeaponCategory @ "weapon category benefits from breakthrough" @ TechState.GetMyTemplateName(), class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
 
 		XComHQ.ExtraUpgradeWeaponCats.AddItem(WeaponCategory);
 	}

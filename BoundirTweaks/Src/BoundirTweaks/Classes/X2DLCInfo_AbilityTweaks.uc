@@ -83,7 +83,7 @@ static function ControlAbilityEnvironmentalDamage(X2AbilityTemplateManager Abili
 
 			WeaponEffect.EnvironmentalDamageAmount = EnvironmentalDamageControl.EnvironmentDamage;
 
-			`Log("Changing Environmental Damage from" @ AbilityTemplate.EnvironmentalDamageAmount @ "to" @ EnvironmentalDamageControl.EnvironmentDamage @ "for template" @ AbilityTemplate.DataName, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+			`Log("Changing Environmental Damage from" @ WeaponEffect.EnvironmentalDamageAmount @ "to" @ EnvironmentalDamageControl.EnvironmentDamage @ "for template" @ AbilityTemplate.DataName, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
 		}
 	}
 }
