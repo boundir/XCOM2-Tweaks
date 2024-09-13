@@ -291,8 +291,7 @@ static function RecreateBladestormAssassinAttack(X2AbilityTemplateManager Abilit
 	local X2AbilityTemplate OriginalAbilityTemplate;
 	local X2AbilityTemplate AbilityTemplate;
 	local X2AbilityToHitCalc_StandardMelee ToHitCalc;
-	local X2Effect_Persistent ActivatedEffect;
-	local X2Condition_UnitEffectsWithAbilitySource ExcludeEffectsCondition;
+	local X2AbilityCooldown AbilityCooldown;
 
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
 
@@ -316,16 +315,10 @@ static function RecreateBladestormAssassinAttack(X2AbilityTemplateManager Abilit
 	ToHitCalc.bReactionFire = true;
 	ToHitCalc.bGuaranteedHit = true;
 	AbilityTemplate.AbilityToHitCalc = ToHitCalc;
-
-	ExcludeEffectsCondition = new class'X2Condition_UnitEffectsWithAbilitySource';
-	ExcludeEffectsCondition.AddExcludeEffect('BladestormAssassinActivated', 'AA_DuplicateEffectIgnored');
-	AbilityTemplate.AbilityShooterConditions.AddItem(ExcludeEffectsCondition);
-
-	ActivatedEffect = new class'X2Effect_Persistent';
-	ActivatedEffect.EffectName = 'BladestormAssassinActivated';
-	ActivatedEffect.BuildPersistentEffect(1, true, false, true);
-	ActivatedEffect.DuplicateResponse = eDupe_Ignore;
-	AbilityTemplate.AddTargetEffect(ActivatedEffect);
+	
+	AbilityCooldown = new class'X2AbilityCooldown';
+	AbilityCooldown.iNumTurns = 1;
+	AbilityTemplate.AbilityCooldown = AbilityCooldown;
 }
 
 static function FeedbackCanOnlyTriggerOnce(X2AbilityTemplateManager AbilityTemplateManager)

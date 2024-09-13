@@ -220,7 +220,6 @@ static function AllowCategoryListOnWeaponBreakthroughs(X2StrategyElementTemplate
 static function MOCXNotAllowedInRetaliationMission()
 {
 	local XComTacticalMissionManager MissionManager;
-	local MissionDefinition MissionDefinition;
 	local string MissionType;
 	local int Scan;
 

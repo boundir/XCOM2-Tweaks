@@ -1,6 +1,5 @@
 class X2DLCInfo_CharacterTweaks extends X2DownloadableContentInfo;
 
-var config(GameData_SoldierSkills) array<name> GRANT_BLADESTORM_GUARANTEED_HIT;
 var config(GameData_SoldierSkills) array<name> NOT_EASY_TO_HIT;
 
 var config(GameCore) array<UnitLootReplacer> SUPPLANT_LOOT_UNITS;
@@ -22,7 +21,6 @@ static event OnPostTemplatesCreated()
 
 	RulersAffectTimerAbilities(CharacterTemplateManager);
 	EUBerserkerGetsDevastatingPunchAtMeleeRange(CharacterTemplateManager);
-	AttachGaranteedHitBladestorm(CharacterTemplateManager);
 	RemoveEasyToHitAbililty(CharacterTemplateManager);
 	RemoveUnwantedLoot(CharacterTemplateManager);
 }
@@ -75,33 +73,6 @@ static function EUBerserkerGetsDevastatingPunchAtMeleeRange(X2CharacterTemplateM
 		}
 
 		CharacterTemplate.Abilities.AddItem('EUBerserkerDevastatingPunchAtMeleeRange');
-	}
-}
-
-static function AttachGaranteedHitBladestorm(X2CharacterTemplateManager CharacterTemplateManager)
-{
-	local array<X2DataTemplate> DifficulityVariants;
-	local X2DataTemplate DataTemplate;
-	local X2CharacterTemplate CharacterTemplate;
-	local name TemplateName;
-
-	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
-
-	foreach default.GRANT_BLADESTORM_GUARANTEED_HIT(TemplateName)
-	{
-		CharacterTemplateManager.FindDataTemplateAllDifficulties(TemplateName, DifficulityVariants);
-
-		foreach DifficulityVariants(DataTemplate)
-		{
-			CharacterTemplate = X2CharacterTemplate(DataTemplate);
-
-			if (CharacterTemplate == none)
-			{
-				continue;
-			}
-
-			CharacterTemplate.Abilities.AddItem('BladestormAssassin');
-		}
 	}
 }
 
