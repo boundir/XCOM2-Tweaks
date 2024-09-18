@@ -170,8 +170,6 @@ static function DisruptorRifleCritUnitCondition(X2AbilityTemplateManager Ability
 	local X2AbilityTemplate AbilityTemplate;
 	local X2Condition_UnitPropertyTweak UnitProperty;
 	local X2Effect_ToHitModifier PersistentEffect;
-	local name UnitType;
-	local name UnitClass;
 
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
 
@@ -187,15 +185,8 @@ static function DisruptorRifleCritUnitCondition(X2AbilityTemplateManager Ability
 	UnitProperty = new class'X2Condition_UnitPropertyTweak';
 	UnitProperty.ExcludeNonPsionic = true;
 
-	foreach default.UNIT_TYPE_UNAFFECTED_BY_DISRUPTOR_GUARANTEED_CRIT(UnitType)
-	{
-		UnitProperty.ExcludeTypes.AddItem(UnitType);
-	}
-
-	foreach default.CLASSES_AFFECTED_BY_DISRUPTOR_GUARANTEED_CRIT(UnitClass)
-	{
-		UnitProperty.IncludeSoldierClasses.AddItem(UnitClass);
-	}
+	UnitProperty.ExcludeTypes = default.UNIT_TYPE_UNAFFECTED_BY_DISRUPTOR_GUARANTEED_CRIT;
+	UnitProperty.IncludeSoldierClasses = default.CLASSES_AFFECTED_BY_DISRUPTOR_GUARANTEED_CRIT;
 
 	PersistentEffect = new class'X2Effect_ToHitModifier';
 	PersistentEffect.DuplicateResponse = eDupe_Ignore;

@@ -4,6 +4,9 @@ var name RULER_STATE;
 var const float RULER_ENGAGED;
 var const float RULER_DISENGAGED;
 
+var config(GameData_SoldierSkills) array<name> UNIT_TYPE_MILITIA_CANT_TARGET;
+var config(GameData_SoldierSkills) array<name> UNIT_TEMPLATE_MILITIA_CANT_TARGET;
+
 static function array<X2DataTemplate> CreateTemplates()
 {
 	local array<X2DataTemplate> Templates;
@@ -20,6 +23,8 @@ static function array<X2DataTemplate> CreateTemplates()
 
 	Templates.AddItem(CreateResumeTimer());
 	Templates.AddItem(CreatePauseTimer());
+
+	Templates.AddItem(CreateStandardShotMilitia());
 
 	return Templates;
 }
@@ -177,6 +182,24 @@ static function X2AbilityTemplate CreatePauseTimer()
 	Template.bFrameEvenWhenUnitIsHidden = true;
 	Template.BuildNewGameStateFn = TypicalAbility_BuildGameState;
 	Template.BuildVisualizationFn = TypicalAbility_BuildVisualization;
+
+	return Template;
+}
+
+static function X2AbilityTemplate CreateStandardShotMilitia()
+{
+	local X2AbilityTemplate Template;
+	local X2Condition_UnitPropertyTweak UnitPropertyCondition;
+
+	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
+
+	Template = class'X2Ability_WeaponCommon'.static.Add_StandardShot('StandardShotMilitia');
+
+	UnitPropertyCondition = new class'X2Condition_UnitPropertyTweak';
+	UnitPropertyCondition.ExcludeTypes = default.UNIT_TYPE_MILITIA_CANT_TARGET;
+	UnitPropertyCondition.ExcludeTemplates = default.UNIT_TEMPLATE_MILITIA_CANT_TARGET;
+
+	Template.AbilityTargetConditions.AddItem(UnitPropertyCondition);
 
 	return Template;
 }

@@ -2,8 +2,13 @@ class X2Condition_UnitPropertyTweak extends X2Condition;
 
 var() array<name> IncludeTypes;
 var() array<name> ExcludeTypes;
+
+var() array<name> IncludeTemplates;
+var() array<name> ExcludeTemplates;
+
 var() array<name> IncludeSoldierClasses;
 var() array<name> ExcludeSoldierClasses;
+
 var() bool IncludeWeakAgainstTechLikeRobot;
 var() bool ExcludeOrganic;
 var() bool ExcludePsionic;
@@ -15,8 +20,7 @@ event name CallMeetsCondition(XComGameState_BaseObject kTarget)
 { 
 	local XComGameState_Unit UnitState;
 	local name UnitTypeName;
-
-	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
+	local name UnitTemplateName;
 
 	UnitState = XComGameState_Unit(kTarget);
 
@@ -31,6 +35,7 @@ event name CallMeetsCondition(XComGameState_BaseObject kTarget)
 	}
 
 	UnitTypeName = UnitState.GetMyTemplate().CharacterGroupName;
+	UnitTemplateName = UnitState.GetMyTemplateName();
 
 	if (UnitState.IsSoldier())
 	{
@@ -54,6 +59,16 @@ event name CallMeetsCondition(XComGameState_BaseObject kTarget)
 	{
 		return 'AA_UnitIsWrongType';
 	}
+	
+	if (IncludeTemplates.Find(UnitTemplateName) != INDEX_NONE)
+	{
+		return 'AA_Success';
+	}
+
+	if (ExcludeTemplates.Find(UnitTemplateName) != INDEX_NONE)
+	{
+		return 'AA_UnitIsWrongType';
+	}
 
 	if (IncludeWeakAgainstTechLikeRobot && UnitState.GetMyTemplate().bWeakAgainstTechLikeRobot)
 	{
@@ -71,12 +86,4 @@ event name CallMeetsCondition(XComGameState_BaseObject kTarget)
 	}
 
 	return 'AA_Success';
-}
-
-DefaultProperties
-{
-	ExcludePsionic = false;
-	ExcludeNonPsionic = false;
-	ExcludeRobotic = false;
-	ExcludeNonRobotic = false;
 }

@@ -16,6 +16,8 @@ var config(GameData_SoldierSkills) array<name> CLASSES_AFFECTED_BY_NULLROUNDS_NO
 var config(GameData_WeaponData) array<name> CRIT_PSIONIC_WEAPONS;
 var config(GameData_WeaponData) array<name> NO_MELEE_DAMAGE_ON_THROWN_WEAPONS;
 
+var config(GameData_SoldierSkills) array<name> MILITIA_WEAPONS;
+
 var config(GameData_WeaponData) array<WeaponEnvironmentalDamageControl> WEAPON_ENVIRONMENTAL_DAMAGE;
 
 static event OnPostTemplatesCreated()
@@ -33,7 +35,7 @@ static event OnPostTemplatesCreated()
 	NullRoundsDamageUnitCondition(ItemTemplateManager);
 
 	WeaponThrownDoNotApplyMeleeDamage(ItemTemplateManager);
-
+	SwapMilitiaStandardShotAbility(ItemTemplateManager);
 	EnvironmentalDamageControl(ItemTemplateManager);
 }
 
@@ -236,6 +238,34 @@ static function WeaponThrownDoNotApplyMeleeDamage(X2ItemTemplateManager ItemTemp
 
 			WeaponTemplate.BaseDamage.DamageType = 'DefaultProjectile';
 			WeaponTemplate.DamageTypeTemplateName = 'DefaultProjectile';
+		}
+	}
+}
+
+static function SwapMilitiaStandardShotAbility(X2ItemTemplateManager ItemTemplateManager)
+{
+	local array<X2DataTemplate> DifficulityVariants;
+	local X2DataTemplate DataTemplate;
+	local X2WeaponTemplate WeaponTemplate;
+	local name WeaponName;
+
+	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
+
+	foreach default.MILITIA_WEAPONS(WeaponName)
+	{
+		ItemTemplateManager.FindDataTemplateAllDifficulties(WeaponName, DifficulityVariants);
+
+		foreach DifficulityVariants(DataTemplate)
+		{
+			WeaponTemplate = X2WeaponTemplate(DataTemplate);
+
+			if (WeaponTemplate == none)
+			{
+				continue;
+			}
+
+			WeaponTemplate.Abilities.RemoveItem('StandardShot');
+			WeaponTemplate.Abilities.AddItem('StandardShotMilitia');
 		}
 	}
 }
