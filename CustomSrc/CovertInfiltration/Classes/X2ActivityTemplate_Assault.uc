@@ -1,0 +1,405 @@
+//---------------------------------------------------------------------------------------
+//  AUTHOR:  Xymanek
+//  PURPOSE: Template for an instant mission (no infiltration) as an activity
+//---------------------------------------------------------------------------------------
+//  WOTCStrategyOverhaul Team
+//---------------------------------------------------------------------------------------
+
+class X2ActivityTemplate_Assault extends X2ActivityTemplate_Mission config(Infiltration);
+
+// Expiry in hours
+var config bool bExpires;
+var config int ExpirationBaseTime;
+var config int ExpirationVariance;
+
+var localized string MissionPinLabel;
+
+static function DefaultAssaultSetup (XComGameState NewGameState, XComGameState_Activity ActivityState)
+{
+	CreateMission(NewGameState, ActivityState);
+	MarkMissionForStrategyMapAlert(NewGameState, ActivityState);
+}
+
+static function MarkMissionForStrategyMapAlert (XComGameState NewGameState, XComGameState_Activity ActivityState)
+{
+	local XComGameState_CovertInfiltrationInfo CIInfo;
+	
+	CIInfo = class'XComGameState_CovertInfiltrationInfo'.static.ChangeForGamestate(NewGameState);
+	CIInfo.MissionsToShowAlertOnStrategyMap.AddItem(ActivityState.PrimaryObjectRef);
+}
+
+static function DefaultSetupStageSubmitted (XComGameState_Activity ActivityState)
+{
+	class'UIUtilities_Infiltration'.static.AssaultMissionAvaliable(
+		class'X2Helper_Infiltration'.static.GetMissionStateFromActivity(ActivityState)
+	);
+}
+
+static function array<name> DefaultGetSitreps (XComGameState_MissionSite MissionState, XComGameState_Activity ActivityState)
+{
+	return class'X2Helper_Infiltration'.static.GetSitrepsForAssaultMission(MissionState);
+}
+
+static function CreateMission (XComGameState NewGameState, XComGameState_Activity ActivityState)
+{
+	local XComGameState_Activity_Assault AssaultActivityState;
+	local X2StrategyElementTemplateManager TemplateManager;
+	local X2ActivityTemplate_Assault ActivityTemplate;
+	local XComGameState_MissionSite MissionState;
+	local X2MissionSourceTemplate MissionSource;
+	local XComGameState_WorldRegion Region;
+
+	AssaultActivityState = XComGameState_Activity_Assault(ActivityState);
+	ActivityTemplate = X2ActivityTemplate_Assault(ActivityState.GetMyTemplate());
+	TemplateManager = class'X2StrategyElementTemplateManager'.static.GetStrategyElementTemplateManager();
+	MissionSource = X2MissionSourceTemplate(TemplateManager.FindStrategyElementTemplate(MISSION_SOURCE_NAME));
+	Region = ActivityState.GetActivityChain().GetPrimaryRegion();
+
+	MissionState = XComGameState_MissionSite(NewGameState.CreateNewStateObject(class'XComGameState_MissionSite'));
+	ActivityState.PrimaryObjectRef = MissionState.GetReference();
+	class'X2Helper_Infiltration'.static.SetFactionOnMissionSite(NewGameState, ActivityState);
+	
+	if (ActivityTemplate.PreMissionSetup != none)
+	{
+		ActivityTemplate.PreMissionSetup(NewGameState, ActivityState);
+	}
+
+	MissionState.BuildMission(
+		MissionSource, Region.GetRandom2DLocationInRegion(), Region.GetReference(), InitRewardsStates(NewGameState, ActivityState), true /*bAvailable*/, 
+		false /* bExpiring */, -1 /* iHours */, -1 /* iSeconds */,
+		/* bUseSpecifiedLevelSeed */, /* LevelSeedOverride */, false /* bSetMissionData */
+	);
+
+	// Do not expire the mission site, as that causes a bunch of behaviour we don't want
+	// Instead, the expiry is handled by the activiy itself
+	AssaultActivityState.SetupExpiry();
+
+	class'X2Helper_Infiltration'.static.InitalizeGeneratedMissionFromActivity(NewGameState, ActivityState);
+	class'UIUtilities_Strategy'.static.GetAlienHQ().AddChosenTacticalTagsToMission(MissionState);
+	SelectSitrepsAndPlot(MissionState);
+}
+
+function int RollExpiry ()
+{
+	local int Variance;
+	local bool bNegVariance;
+
+	Variance = `SYNC_RAND(ExpirationVariance);
+
+	// roll chance for negative variance
+	bNegVariance = `SYNC_RAND(2) < 1;
+	if (bNegVariance) Variance *= -1;
+
+	return ExpirationBaseTime + Variance;
+}
+
+static function array<XComGameState_Reward> InitRewardsStates (XComGameState NewGameState, XComGameState_Activity ActivityState, optional bool SubstituteNone = true)
+{
+	local array<XComGameState_Reward> RewardStates;
+	local array<StateObjectReference> RewardRefs;
+	local X2ActivityTemplate_Assault Template;
+	local StateObjectReference RewardRef;
+	local XComGameStateHistory History;
+
+	Template = X2ActivityTemplate_Assault(ActivityState.GetMyTemplate());
+	History = `XCOMHISTORY;
+
+	RewardRefs = Template.InitializeMissionRewards(NewGameState, ActivityState);
+
+	foreach RewardRefs(RewardRef)
+	{
+		RewardStates.AddItem(XComGameState_Reward(History.GetGameStateForObjectID(RewardRef.ObjectID)));
+	}
+
+	if (RewardRefs.Length == 0 && SubstituteNone)
+	{
+		RewardRefs.AddItem(class'X2Helper_Infiltration'.static.CreateRewardNone(NewGameState));
+	}
+
+	return RewardStates;
+}
+
+static function SelectSitrepsAndPlot (XComGameState_MissionSite MissionState)
+{
+	local XComHeadquartersCheatManager CheatManager;
+	local XComParcelManager ParcelMgr;
+	local string Biome;
+	local X2MissionSourceTemplate MissionSource;
+	local array<name> SourceSitReps;
+	local name SitRepName;
+	local PlotTypeDefinition PlotTypeDef;
+	local PlotDefinition SelectedDef;
+	// Variables for Issue #157
+	local array<X2DownloadableContentInfo> DLCInfos; 
+	local int i; 
+	// Variables for Issue #157
+
+	ParcelMgr = `PARCELMGR;
+
+	// Add Forced SitReps from Cheats
+	CheatManager = XComHeadquartersCheatManager(class'WorldInfo'.static.GetWorldInfo().GetALocalPlayerController().CheatManager);
+	if(CheatManager != none && CheatManager.ForceSitRepTemplate != '')
+	{
+		MissionState.GeneratedMission.SitReps.AddItem(CheatManager.ForceSitRepTemplate);
+		CheatManager.ForceSitRepTemplate = '';
+	}
+	else if(!MissionState.bForceNoSitRep)
+	{
+		// No cheats, add SitReps from the Mission Source
+		MissionSource = MissionState.GetMissionSource();
+
+		if (MissionSource.GetSitrepsFn != none)
+		{
+			SourceSitReps = MissionSource.GetSitrepsFn(MissionState);
+
+			foreach SourceSitReps(SitRepName)
+			{
+				if (MissionState.GeneratedMission.SitReps.Find(SitRepName) == INDEX_NONE)
+				{
+					MissionState.GeneratedMission.SitReps.AddItem(SitRepName);
+				}
+			}
+		}
+	}
+
+	// find a plot that supports the biome and the mission
+	SelectBiomeAndPlotDefinition(MissionState, Biome, SelectedDef, MissionState.GeneratedMission.SitReps);
+
+	// do a weighted selection of our plot
+	MissionState.GeneratedMission.Plot = SelectedDef;
+
+	// Add SitReps forced by Plot Type
+	PlotTypeDef = ParcelMgr.GetPlotTypeDefinition(MissionState.GeneratedMission.Plot.strType);
+
+	foreach PlotTypeDef.ForcedSitReps(SitRepName)
+	{
+		if (MissionState.GeneratedMission.SitReps.Find(SitRepName) == INDEX_NONE && 
+			(SitRepName != 'TheLost' || MissionState.GeneratedMission.SitReps.Find('TheHorde') == INDEX_NONE))
+		{
+			MissionState.GeneratedMission.SitReps.AddItem(SitRepName);
+		}
+	}
+
+	// Start Issue #157
+	DLCInfos = `ONLINEEVENTMGR.GetDLCInfos(false);
+	for (i = 0; i < DLCInfos.Length; ++i)
+	{
+		DLCInfos[i].PostSitRepCreation(MissionState.GeneratedMission, MissionState);
+	}
+	// End Issue #157
+
+	// Now that all sitreps have been chosen, add any sitrep tactical tags to the mission list
+	MissionState.UpdateSitrepTags();
+
+	// the plot we find should either have no defined biomes, or the requested biome type
+	//`assert( (GeneratedMission.Plot.ValidBiomes.Length == 0) || (GeneratedMission.Plot.ValidBiomes.Find( Biome ) != -1) );
+	if (MissionState.GeneratedMission.Plot.ValidBiomes.Length > 0)
+	{
+		MissionState.GeneratedMission.Biome = ParcelMgr.GetBiomeDefinition(Biome);
+	}
+}
+
+static function string DefaultGetOverviewStatusAssault (XComGameState_Activity ActivityState)
+{
+	if (ActivityState.IsOngoing())
+	{
+		return class'UIUtilities_Infiltration'.default.strCompletionStatusLabel_Available;
+	}
+
+	return DefaultGetOverviewStatus(ActivityState);
+}
+
+static function DefaultAssaultOverrideStrategyMapIconTooltip (XComGameState_Activity ActivityState, out string Title, out string Body)
+{
+	local XComGameState_Activity_Assault AssaultActivityState;
+	local string ExpirationValue, ExpirationLabel;
+
+	// Call "parent"
+	DefaultOverrideStrategyMapIconTooltip(ActivityState, Title, Body);
+
+	// Expiry. "Inspired" by Hours Instead of Days
+	AssaultActivityState = XComGameState_Activity_Assault(ActivityState);
+	if (AssaultActivityState != none && AssaultActivityState.bExpiring)
+	{
+		GetTimeLabelValue(AssaultActivityState.GetHoursRemaining(), ExpirationValue, ExpirationLabel);
+		Body $= ". Expires in" @ ExpirationValue @ ExpirationLabel;
+	}
+}
+
+// Copied from "Hours Instead of Days" mod by -bg-.
+// I would prefer that people use that mod directly,
+// unfortuantely it doesn't understand XCGS_A_A expiration
+static function GetTimeLabelValue (int Hours, out string TimeValue, out string TimeLabel)
+{	
+	if (Hours < 0 || Hours > 24 * 30 * 12) // Ignore year long missions
+	{
+		TimeValue = "";
+		TimeLabel = "";
+		return;
+	}
+	if (Hours > /*default.NUM_HOURS_TO_DAYS*/ 48)
+	{
+		Hours = FCeil(float(Hours) / 24.0f);
+		TimeValue = string(Hours);
+		TimeLabel = class'UIUtilities_Text'.static.GetDaysString(Hours);
+	}
+	else
+	{
+		TimeValue = string(Hours);
+		TimeLabel = class'UIUtilities_Text'.static.GetHoursString(Hours);
+	}
+}
+
+////////////////////////////
+/// Private from XCGS_MS ///
+////////////////////////////
+
+static function SelectBiomeAndPlotDefinition(XComGameState_MissionSite MissionState, out string Biome, out PlotDefinition SelectedDef, optional array<name> SitRepNames)
+{
+	local MissionDefinition MissionDef;
+	local XComParcelManager ParcelMgr;
+	local string PrevBiome;
+	local array<string> ExcludeBiomes;
+
+	MissionDef = MissionState.GeneratedMission.Mission;
+	ParcelMgr = `PARCELMGR;
+	ExcludeBiomes.Length = 0;
+	
+	Biome = SelectBiome(MissionState, ExcludeBiomes);
+	PrevBiome = Biome;
+
+	while(!SelectPlotDefinition(MissionDef, Biome, SelectedDef, ExcludeBiomes, SitRepNames))
+	{
+		Biome = SelectBiome(MissionState, ExcludeBiomes);
+
+		if(Biome == PrevBiome)
+		{
+			`Redscreen("Could not find valid plot for mission!\n" $ " MissionType: " $ MissionDef.MissionName);
+			SelectedDef = ParcelMgr.arrPlots[0];
+			return;
+		}
+	}
+}
+
+static function string SelectBiome(XComGameState_MissionSite MissionState, out array<string> ExcludeBiomes)
+{
+	local MissionDefinition MissionDef;
+	local string Biome;
+	local int TotalValue, RollValue, CurrentValue, idx, BiomeIndex;
+	local array<BiomeChance> BiomeChances;
+	local string TestBiome;
+
+	MissionDef = MissionState.GeneratedMission.Mission;
+	
+	if(MissionDef.ForcedBiome != "")
+	{
+		return MissionDef.ForcedBiome;
+	}
+
+	// Grab Biome from location
+	Biome = class'X2StrategyGameRulesetDataStructures'.static.GetBiome(MissionState.Get2DLocation());
+
+	if(ExcludeBiomes.Find(Biome) != INDEX_NONE)
+	{
+		Biome = "";
+	}
+
+	// Grab "extra" biomes which we could potentially swap too (used for Xenoform)
+	BiomeChances = class'X2StrategyGameRulesetDataStructures'.default.m_arrBiomeChances;
+
+	// Not all plots support these "extra" biomes, check if excluded
+	foreach ExcludeBiomes(TestBiome)
+	{
+		BiomeIndex = BiomeChances.Find('BiomeName', TestBiome);
+
+		if(BiomeIndex != INDEX_NONE)
+		{
+			BiomeChances.Remove(BiomeIndex, 1);
+		}
+	}
+
+	// If no "extra" biomes just return the world map biome
+	if(BiomeChances.Length == 0)
+	{
+		return Biome;
+	}
+
+	// Calculate total value of roll to see if we want to swap to another biome
+	TotalValue = 0;
+
+	for(idx = 0; idx < BiomeChances.Length; idx++)
+	{
+		TotalValue += BiomeChances[idx].Chance;
+	}
+
+	// Chance to use location biome is remainder of 100
+	if(TotalValue < 100)
+	{
+		TotalValue = 100;
+	}
+
+	// Do the roll
+	RollValue = `SYNC_RAND_STATIC(TotalValue);
+	CurrentValue = 0;
+
+	for(idx = 0; idx < BiomeChances.Length; idx++)
+	{
+		CurrentValue += BiomeChances[idx].Chance;
+
+		if(RollValue < CurrentValue)
+		{
+			Biome = BiomeChances[idx].BiomeName;
+			break;
+		}
+	}
+
+	return Biome;
+}
+
+static function bool SelectPlotDefinition(MissionDefinition MissionDef, string Biome, out PlotDefinition SelectedDef, out array<string> ExcludeBiomes, optional array<name> SitRepNames)
+{
+	local XComParcelManager ParcelMgr;
+	local array<PlotDefinition> ValidPlots;
+	local X2SitRepTemplateManager SitRepMgr;
+	local name SitRepName;
+	local X2SitRepTemplate SitRep;
+
+	ParcelMgr = `PARCELMGR;
+	ParcelMgr.GetValidPlotsForMission(ValidPlots, MissionDef, Biome);
+	SitRepMgr = class'X2SitRepTemplateManager'.static.GetSitRepTemplateManager();
+
+	// pull the first one that isn't excluded from strategy, they are already in order by weight
+	foreach ValidPlots(SelectedDef)
+	{
+		foreach SitRepNames(SitRepName)
+		{
+			SitRep = SitRepMgr.FindSitRepTemplate(SitRepName);
+
+			if(SitRep != none && SitRep.ExcludePlotTypes.Find(SelectedDef.strType) != INDEX_NONE)
+			{
+				continue;
+			}
+		}
+
+		if(!SelectedDef.ExcludeFromStrategy)
+		{
+			return true;
+		}
+	}
+
+	ExcludeBiomes.AddItem(Biome);
+	return false;
+}
+
+defaultproperties
+{
+	StateClass = class'XComGameState_Activity_Assault'
+	ActivityType = "eActivityType_Assault"
+	GetOverviewStatus = DefaultGetOverviewStatusAssault
+	OverrideStrategyMapIconTooltip = DefaultAssaultOverrideStrategyMapIconTooltip
+
+	SetupStage = DefaultAssaultSetup
+	SetupStageSubmitted = DefaultSetupStageSubmitted
+
+	GetSitreps = DefaultGetSitreps
+}

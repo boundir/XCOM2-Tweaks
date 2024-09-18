@@ -27,9 +27,14 @@ static function RemoveChosenWeakness(XComGameState NewGameState, StateObjectRefe
 	ChosenWeaknesses = ChosenState.GetChosenWeaknesses();
 	ChosenWeaknessesCount = ChosenWeaknesses.Length;
 
+	if (ChosenWeaknessesCount <= class'X2DLCInfo_StrategyTweaks'.default.MINIMUM_CHOSEN_TOTAL_WEAKNESSES)
+	{
+		return;
+	}
+
 	for (idx = 0; idx < class'X2DLCInfo_StrategyTweaks'.default.CHOSEN_WEAKNESSES_REMOVED_BY_TRAINING; idx++)
 	{
-		if (ChosenWeaknessesCount == 0)
+		if (ChosenWeaknessesCount == class'X2DLCInfo_StrategyTweaks'.default.MINIMUM_CHOSEN_TOTAL_WEAKNESSES)
 		{
 			break;
 		}

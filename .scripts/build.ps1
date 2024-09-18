@@ -11,6 +11,7 @@ Write-Host "Sourcing $common"
 . ($common)
 
 $builder = [BuildProject]::new("BoundirTweaks", $srcDirectory, $sdkPath, $gamePath)
+$builder.IncludeSrc("$srcDirectory\CustomSrc")
 
 switch ($config) {
     "debug" {

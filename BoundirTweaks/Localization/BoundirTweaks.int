@@ -1,2 +1,5 @@
 [X2EventListener_AbilityPurchaseRestriction]
 ReasonLockedClassForbidden="You can't unlock abillities for %CLASSNAME% class."
+
+[X2EventListener_CovertActionStaffSlotFilled]
+ReasonNoReward="Stat limit reached"

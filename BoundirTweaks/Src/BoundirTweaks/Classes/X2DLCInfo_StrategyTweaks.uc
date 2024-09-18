@@ -1,12 +1,15 @@
 class X2DLCInfo_StrategyTweaks extends X2DownloadableContentInfo;
 
-var config(GameData) array<DarkEventAppearanceRestriction> DARK_EVENT_CONDITIONS;
-var config(GameData) array<name> SITREP_RULER_EXCLUSION;
-var config(GameData) int CHOSEN_WEAKNESSES_REMOVED_BY_TRAINING;
 var config(GameData) array<CovertActionStatRewardLimit> COVERT_ACTION_STAT_LIMIT;
+var config(GameData) array<DarkEventAppearanceRestriction> DARK_EVENT_CONDITIONS;
 var config(GameData) array<FacilityPersonelManagement> FACILITY_PERSONEL_MANAGEMENT;
 var config(GameData) array<WeaponBreakthrough> WEAPON_BREAKTHROUGH;
+
+var config(GameData) array<name> SITREP_RULER_EXCLUSION;
 var config(GameData) array<string> FORBID_MOCX_FROM_MISSION_TYPE;
+
+var config(GameData) int CHOSEN_WEAKNESSES_REMOVED_BY_TRAINING;
+var config(GameData) int MINIMUM_CHOSEN_TOTAL_WEAKNESSES;
 
 static private function X2DLCInfo_StrategyTweaks GetClassDefaultObject()
 {
@@ -25,7 +28,7 @@ static event OnPostTemplatesCreated()
 
 	ExcludeRulersFromSitrep(SitRepTemplateManager);
 	AllowFactionHeroesRecruitment(StrategyElementTemplateManager);
-	TrainingRemovesWeaknesses(StrategyElementTemplateManager);
+	ChosenTrainingRemovesWeaknesses(StrategyElementTemplateManager);
 	ManageDarkEventSpawningConditions(StrategyElementTemplateManager);
 	LimitCovertActionStatBonus(StrategyElementTemplateManager);
 	FacilityPersonelManagement(StrategyElementTemplateManager);
@@ -86,7 +89,7 @@ static function AllowFactionHeroesRecruitment(X2StrategyElementTemplateManager S
 	RewardTemplate.IsRewardAvailableFn = CanRecruitFactionHeroe;
 }
 
-static function TrainingRemovesWeaknesses(X2StrategyElementTemplateManager StrategyElementTemplateManager)
+static function ChosenTrainingRemovesWeaknesses(X2StrategyElementTemplateManager StrategyElementTemplateManager)
 {
 	local X2ChosenActionTemplate ChosenActionTemplate;
 	local ChosenTrainingDecorator ChosenTrainingDecorator;

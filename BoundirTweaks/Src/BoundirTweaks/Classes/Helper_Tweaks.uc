@@ -7,6 +7,24 @@ var config bool EnableTrace;
 `define TweaksDebug(msg) `Log(`msg, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug')
 `define TweaksDebug(msg) `Log(`msg, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace')
 
+static final function bool IsModActive(name ModName)
+{
+	local XComOnlineEventMgr EventManager;
+	local int Index;
+
+	EventManager = `ONLINEEVENTMGR;
+
+	for (Index = EventManager.GetNumDLC() - 1; Index >= 0; Index--)
+	{
+		if (EventManager.GetDLCNames(Index) == ModName)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 static function bool IsResistanceWarriorUnit(XComGameState_Unit UnitState)
 {
 	local XComGameState_Item ItemState;

@@ -17,7 +17,7 @@
 >   - *Made Whole* requires the Chosen to have at least one weakness.
 >   - *Spider and Fly*, *Left Behind*, *Wild Hunt* require that all Chosen have not been killed.
 > - Lock [Psionic class](https://steamcommunity.com/sharedfiles/filedetails/?id=1138411890) by **ADVENT Avenger** training in GTS after research is completed (default research is *Psionics*)
-> - Covert Actions limits the amount of bonus stats on soldier can get. Covert Actions will not display the reward if the staffed unit has reached the limit (working on [Covert Infiltration](https://steamcommunity.com/sharedfiles/filedetails/?id=2567230730) compatibility)
+> - Covert Actions limits the amount of bonus stats on soldier can get. Covert Actions will not display the reward if the staffed unit has reached the limit.
 > - *Rage Strike* is considered a melee attack.
 > - Reduces environmental damages from weapons and abilities.
 > - *Suppression* ability tweaks inspired by [Ability Tweaks](https://steamcommunity.com/sharedfiles/filedetails/?id=1133528728) by **ADVENT Avenger**:
@@ -38,10 +38,12 @@
 > - Resistance Warrior additional character is pulled from the pool.
 > - Modify Weapon Breakthroughs condition to allow WeaponCat array.
 > - Prevents listed abilities to also apply weapon damages.
+> - Militia won't target listed unit types.
 >
 >> #### Plans:
 >> - [x] Chosen action *Training* adds Strength and removes a number of weaknesses. *Require testing*.
 >> - [x] Feedback resistance triggers once per attack. *Require testing*.
 >> - [x] Prevents [The MOCX Initiative](https://steamcommunity.com/sharedfiles/filedetails/?id=1129661000) by **RealityMachina** units to appear in retaliation missions.
+>> - [ ] [The MOCX Initiative](https://steamcommunity.com/sharedfiles/filedetails/?id=1129661000) by **RealityMachina** units get reduced vision when bleeding out.
 >
 > ---
