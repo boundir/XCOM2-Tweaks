@@ -19,6 +19,9 @@ var config(GameData_WeaponData) array<name> NO_MELEE_DAMAGE_ON_THROWN_WEAPONS;
 var config(GameData_SoldierSkills) array<name> MILITIA_WEAPONS;
 
 var config(GameData_WeaponData) array<WeaponEnvironmentalDamageControl> WEAPON_ENVIRONMENTAL_DAMAGE;
+var config(GameData_WeaponData) array<WeaponDamageValueControl> WEAPON_DAMAGE_VALUE;
+
+var config(GameData) array<LoadoutManagement> MANAGE_LOADOUT;
 
 static event OnPostTemplatesCreated()
 {
@@ -36,7 +39,11 @@ static event OnPostTemplatesCreated()
 
 	WeaponThrownDoNotApplyMeleeDamage(ItemTemplateManager);
 	SwapMilitiaStandardShotAbility(ItemTemplateManager);
-	EnvironmentalDamageControl(ItemTemplateManager);
+
+	HandleEnvironmentalDamageChanges(ItemTemplateManager);
+	HandleWeaponDamageChanges(ItemTemplateManager);
+
+	ManageLoadouts(ItemTemplateManager);
 }
 
 static function WarlockRifleGuaranteedCritDamage(X2ItemTemplateManager ItemTemplateManager)
@@ -270,7 +277,7 @@ static function SwapMilitiaStandardShotAbility(X2ItemTemplateManager ItemTemplat
 	}
 }
 
-static function EnvironmentalDamageControl(X2ItemTemplateManager ItemTemplateManager)
+static function HandleEnvironmentalDamageChanges(X2ItemTemplateManager ItemTemplateManager)
 {
 	local array<X2WeaponTemplate> WeaponTemplates;
 	local array<X2DataTemplate> DifficulityVariants;
@@ -281,6 +288,10 @@ static function EnvironmentalDamageControl(X2ItemTemplateManager ItemTemplateMan
 	local WeaponEnvironmentalDamageControlException EnvironmentalDamageControlException;
 	local int ScanWeaponCategoryException;
 
+	local bool TemplateFound;
+	local name TemplateName;
+	local int PreviousValue, UpdatedValue;
+
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
 
 	WeaponTemplates = ItemTemplateManager.GetAllWeaponTemplates();
@@ -288,6 +299,10 @@ static function EnvironmentalDamageControl(X2ItemTemplateManager ItemTemplateMan
 	foreach WeaponTemplates(WeaponTemplate)
 	{
 		ItemTemplateManager.FindDataTemplateAllDifficulties(WeaponTemplate.DataName, DifficulityVariants);
+
+		TemplateFound = false;
+		PreviousValue = 0;
+		UpdatedValue = 0;
 
 		foreach DifficulityVariants(DataTemplate)
 		{
@@ -298,6 +313,9 @@ static function EnvironmentalDamageControl(X2ItemTemplateManager ItemTemplateMan
 				continue;
 			}
 
+			TemplateFound = true;
+			TemplateName = ChangeWeaponTemplate.DataName;
+
 			foreach default.WEAPON_ENVIRONMENTAL_DAMAGE(EnvironmentalDamageControl)
 			{
 				ScanWeaponCategoryException = EnvironmentalDamageControl.Exceptions.Find('Weapon', ChangeWeaponTemplate.DataName);
@@ -306,7 +324,8 @@ static function EnvironmentalDamageControl(X2ItemTemplateManager ItemTemplateMan
 				{
 					EnvironmentalDamageControlException = EnvironmentalDamageControl.Exceptions[ScanWeaponCategoryException];
 
-					`Log("Changing Environmental Damage from" @ ChangeWeaponTemplate.iEnvironmentDamage @ "to" @ EnvironmentalDamageControlException.EnvironmentDamage @ "for template" @ ChangeWeaponTemplate.DataName, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+					PreviousValue = ChangeWeaponTemplate.iEnvironmentDamage;
+					UpdatedValue = EnvironmentalDamageControlException.EnvironmentDamage;
 
 					ChangeWeaponTemplate.iEnvironmentDamage = EnvironmentalDamageControlException.EnvironmentDamage;
 
@@ -320,7 +339,8 @@ static function EnvironmentalDamageControl(X2ItemTemplateManager ItemTemplateMan
 
 				if (EnvironmentalDamageControl.Tech == '')
 				{
-					`Log("Changing Environmental Damage from" @ ChangeWeaponTemplate.iEnvironmentDamage @ "to" @ EnvironmentalDamageControl.EnvironmentDamage @ "for template" @ ChangeWeaponTemplate.DataName, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+					PreviousValue = ChangeWeaponTemplate.iEnvironmentDamage;
+					UpdatedValue = EnvironmentalDamageControl.EnvironmentDamage;
 
 					ChangeWeaponTemplate.iEnvironmentDamage = EnvironmentalDamageControl.EnvironmentDamage;
 				}
@@ -328,12 +348,86 @@ static function EnvironmentalDamageControl(X2ItemTemplateManager ItemTemplateMan
 				{
 					if (ChangeWeaponTemplate.WeaponTech == EnvironmentalDamageControl.Tech)
 					{
-						`Log("Changing Environmental Damage from" @ ChangeWeaponTemplate.iEnvironmentDamage @ "to" @ EnvironmentalDamageControl.EnvironmentDamage @ "for template" @ ChangeWeaponTemplate.DataName, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+						PreviousValue = ChangeWeaponTemplate.iEnvironmentDamage;
+						UpdatedValue = EnvironmentalDamageControl.EnvironmentDamage;
 
 						ChangeWeaponTemplate.iEnvironmentDamage = EnvironmentalDamageControl.EnvironmentDamage;
 					}
 				}
 			}
+		}
+
+		if (TemplateFound)
+		{
+			`Log(TemplateName @ "environmental Damage changed from" @ PreviousValue @ "to" @ UpdatedValue, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+		}
+
+	}
+}
+
+static function HandleWeaponDamageChanges(X2ItemTemplateManager ItemTemplateManager)
+{
+	local array<X2DataTemplate> DifficulityVariants;
+	local X2DataTemplate DataTemplate;
+	local X2WeaponTemplate WeaponTemplate;
+	local WeaponDamageValueControl WeaponDamageControl;
+
+	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
+
+	foreach default.WEAPON_DAMAGE_VALUE(WeaponDamageControl)
+	{
+		ItemTemplateManager.FindDataTemplateAllDifficulties(WeaponDamageControl.Weapon, DifficulityVariants);
+
+		foreach DifficulityVariants(DataTemplate)
+		{
+			WeaponTemplate = X2WeaponTemplate(DataTemplate);
+
+			if (WeaponTemplate == none)
+			{
+				continue;
+			}
+
+			WeaponTemplate.BaseDamage.Damage += WeaponDamageControl.BaseDamage.Damage;
+			WeaponTemplate.BaseDamage.Spread += WeaponDamageControl.BaseDamage.Spread;
+			WeaponTemplate.BaseDamage.PlusOne += WeaponDamageControl.BaseDamage.PlusOne;
+			WeaponTemplate.BaseDamage.Crit += WeaponDamageControl.BaseDamage.Crit;
+			WeaponTemplate.BaseDamage.Pierce += WeaponDamageControl.BaseDamage.Pierce;
+			WeaponTemplate.BaseDamage.Rupture += WeaponDamageControl.BaseDamage.Rupture;
+			WeaponTemplate.BaseDamage.Shred += WeaponDamageControl.BaseDamage.Shred;
+		}
+	}
+}
+
+static function ManageLoadouts(X2ItemTemplateManager ItemTemplateManager)
+{
+	local LoadoutManagement ManageLoadout;
+	local InventoryLoadoutItem LoadoutAddition;
+	local InventoryLoadoutItem LoadoutDeletion;
+	local int Index;
+
+	foreach default.MANAGE_LOADOUT(ManageLoadout)
+	{
+		Index = ItemTemplateManager.Loadouts.Find('LoadoutName', ManageLoadout.LoadoutName);
+
+		if (Index == INDEX_NONE)
+		{
+			continue;
+		}
+
+		foreach ManageLoadout.AddToLoadout(LoadoutAddition)
+		{
+			if (ItemTemplateManager.FindItemTemplate(LoadoutAddition.Item) == none)
+			{
+				`Log(LoadoutAddition.Item @ "not found. Skipping!", class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+				continue;
+			}
+
+			ItemTemplateManager.Loadouts[Index].Items.AddItem(LoadoutAddition);
+		}
+
+		foreach ManageLoadout.RemoveFromLoadout(LoadoutDeletion)
+		{
+			ItemTemplateManager.Loadouts[Index].Items.RemoveItem(LoadoutDeletion);
 		}
 	}
 }

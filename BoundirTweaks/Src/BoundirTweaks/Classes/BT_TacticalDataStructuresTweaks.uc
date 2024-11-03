@@ -32,3 +32,16 @@ struct AbilityEnvironmentalDamageControl
 	var name AbilityName;
 	var int EnvironmentDamage;
 };
+
+struct WeaponDamageValueControl
+{
+	var name Weapon;
+	var WeaponDamageValue BaseDamage;
+};
+
+struct LoadoutManagement
+{
+	var name LoadoutName;
+	var array<InventoryLoadoutItem> AddToLoadout;
+	var array<InventoryLoadoutItem> RemoveFromLoadout;
+};

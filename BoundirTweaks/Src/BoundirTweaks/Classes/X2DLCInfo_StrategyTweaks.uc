@@ -6,10 +6,11 @@ var config(GameData) array<FacilityPersonelManagement> FACILITY_PERSONEL_MANAGEM
 var config(GameData) array<WeaponBreakthrough> WEAPON_BREAKTHROUGH;
 
 var config(GameData) array<name> SITREP_RULER_EXCLUSION;
-var config(GameData) array<string> FORBID_MOCX_FROM_MISSION_TYPE;
 
 var config(GameData) int CHOSEN_WEAKNESSES_REMOVED_BY_TRAINING;
 var config(GameData) int MINIMUM_CHOSEN_TOTAL_WEAKNESSES;
+
+var config(EncounterLists) array<SpawnDistributionListManagement> MANAGE_SPAWN_LISTS;
 
 static private function X2DLCInfo_StrategyTweaks GetClassDefaultObject()
 {
@@ -33,7 +34,7 @@ static event OnPostTemplatesCreated()
 	LimitCovertActionStatBonus(StrategyElementTemplateManager);
 	FacilityPersonelManagement(StrategyElementTemplateManager);
 	AllowCategoryListOnWeaponBreakthroughs(StrategyElementTemplateManager);
-	MOCXNotAllowedInRetaliationMission();
+	ManageSpawnDistributionLists();
 }
 
 static function ExcludeRulersFromSitrep(X2SitRepTemplateManager SitRepTemplateManager)
@@ -220,30 +221,38 @@ static function AllowCategoryListOnWeaponBreakthroughs(X2StrategyElementTemplate
 	}
 }
 
-static function MOCXNotAllowedInRetaliationMission()
+static function ManageSpawnDistributionLists()
 {
 	local XComTacticalMissionManager MissionManager;
-	local string MissionType;
-	local int Scan;
-
-	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
+	local SpawnDistributionListManagement ManageSpawnList;
+	local SpawnDistributionList SpawnList;
+	local int ListIndex;
+	local int i;
 
 	MissionManager = `TACTICALMISSIONMGR;
 
-	foreach default.FORBID_MOCX_FROM_MISSION_TYPE(MissionType)
+	foreach default.MANAGE_SPAWN_LISTS(ManageSpawnList)
 	{
-		Scan = MissionManager.arrMissions.Find('sType', MissionType);
+		ListIndex = MissionManager.SpawnDistributionLists.Find('ListID', ManageSpawnList.ListID);
 
-		if (Scan == INDEX_NONE)
+		if (ListIndex == INDEX_NONE)
 		{
 			continue;
 		}
 
-		`Log("Prevent MOCX from appearing in" @ MissionManager.arrMissions[Scan].MissionName, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+		SpawnList = MissionManager.SpawnDistributionLists[ListIndex];
 
-		MissionManager.arrMissions[Scan].ForcedTacticalTags.AddItem('NoMOCX');
+		for (i = SpawnList.SpawnDistribution.Length - 1; i >= 0; i--)
+		{
+			if (ManageSpawnList.RemoveUnits.Find(SpawnList.SpawnDistribution[i].Template) == INDEX_NONE)
+			{
+				continue;
+			}
+
+			SpawnList.SpawnDistribution.Remove(i, 1);
+			`Log(SpawnList.SpawnDistribution[i].Template @ "was removed from spawn list" @ ManageSpawnList.ListID, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+		}
 	}
-
 }
 
 static function bool CanRecruitFactionHeroe(optional XComGameState NewGameState, optional StateObjectReference AuxRef)

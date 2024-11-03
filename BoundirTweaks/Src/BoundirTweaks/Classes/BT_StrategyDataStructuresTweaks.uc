@@ -47,3 +47,9 @@ struct WeaponBreakthrough
 	var name BreakthroughName;
 	var array<name> WeaponCategories;
 };
+
+struct SpawnDistributionListManagement
+{
+	var name ListID;
+	var array<name> RemoveUnits;
+};
