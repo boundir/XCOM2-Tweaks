@@ -35,7 +35,7 @@ static function X2AbilityTemplate CreateDevastatingPunchAtMeleeRange()
 
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
 
-	`CREATE_X2ABILITY_TEMPLATE (Template, 'EUBerserkerDevastatingPunchAtMeleeRange');
+	`CREATE_X2ABILITY_TEMPLATE(Template, 'EUBerserkerDevastatingPunchAtMeleeRange');
 
 	return Template;
 }
@@ -58,7 +58,7 @@ static function X2AbilityTemplate CreateBladestormAssassinAttack()
 
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
 
-	`CREATE_X2ABILITY_TEMPLATE (Template, 'BladestormAssassinAttack');
+	`CREATE_X2ABILITY_TEMPLATE(Template, 'BladestormAssassinAttack');
 
 	return Template;
 }
@@ -281,7 +281,7 @@ static function EventListenerReturn ActivateRulerEngaged(Object EventData, Objec
 	return ELR_NoInterrupt;
 }
 
-defaultProperties
+defaultproperties
 {
 	RULER_STATE = "RulerEngaged"
 	RULER_ENGAGED = 1.f

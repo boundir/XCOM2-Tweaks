@@ -45,9 +45,9 @@ static function bool IsResistanceWarriorUnit(XComGameState_Unit UnitState)
 
 static function bool IsUnitFromCharacterPool(XComGameState_Unit CharacterPoolUnit, XComGameState_Unit UnitState)
 {
-	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
+	// `Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
 
-	return (CharacterPoolUnit != none && CharacterPoolUnit.GetNickName() == UnitState.GetNickName());
+	return (CharacterPoolUnit != none && CharacterPoolUnit.GetNickName() == UnitState.GetNickName() && CharacterPoolUnit.GetFullName() == UnitState.GetFullName());
 }
 
 static function array<DarkEventAppearanceRestriction> FindDarkEventListByName(name DarkEvent, array<DarkEventAppearanceRestriction> DARK_EVENT_CONDITIONS)
@@ -68,19 +68,8 @@ static function array<DarkEventAppearanceRestriction> FindDarkEventListByName(na
 	return DarkEvents;
 }
 
-static function X2AbilityTemplate CloneAbility(X2AbilityTemplate OriginalAbility, X2AbilityTemplate AbilityTemplate)
+static function CloneAbility(X2AbilityTemplate OriginalAbility, out X2AbilityTemplate AbilityTemplate)
 {
-	local X2AbilityCost AbilityCost;
-	local X2Condition Condition;
-	local X2Effect Effect;
-	local X2AbilityTrigger AbilityTrigger;
-	local AbilityEventListener EventListener;
-	local UIAbilityStatMarkup Markup;
-	local name AbilityName;
-	local name EventName;
-	local name GroupName;
-	local name TraitName;
-
 	`Log(`StaticLocation, default.EnableTrace, 'TweaksTrace');
 
 	AbilityTemplate.AbilitySourceName = OriginalAbility.AbilitySourceName;
@@ -222,100 +211,31 @@ static function X2AbilityTemplate CloneAbility(X2AbilityTemplate OriginalAbility
 
 	AbilityTemplate.TwoTurnAttackAbility = OriginalAbility.TwoTurnAttackAbility;
 
-	foreach OriginalAbility.AbilityCosts(AbilityCost)
-	{
-		AbilityTemplate.AbilityCosts.AddItem(AbilityCost);
-	}
+	AbilityTemplate.AbilityCosts = OriginalAbility.AbilityCosts;
 
-	foreach OriginalAbility.AbilityShooterConditions(Condition)
-	{
-		AbilityTemplate.AbilityShooterConditions.AddItem(Condition);
-	}
+	AbilityTemplate.AbilityShooterConditions = OriginalAbility.AbilityShooterConditions;
+	AbilityTemplate.AbilityTargetConditions = OriginalAbility.AbilityTargetConditions;
+	AbilityTemplate.AbilityMultiTargetConditions = OriginalAbility.AbilityMultiTargetConditions;
 
-	foreach OriginalAbility.AbilityTargetConditions(Condition)
-	{
-		AbilityTemplate.AbilityTargetConditions.AddItem(Condition);
-	}
+	AbilityTemplate.AbilityTargetEffects = OriginalAbility.AbilityTargetEffects;
+	AbilityTemplate.AbilityMultiTargetEffects = OriginalAbility.AbilityMultiTargetEffects;
+	AbilityTemplate.AbilityShooterEffects = OriginalAbility.AbilityShooterEffects;
 
-	foreach OriginalAbility.AbilityMultiTargetConditions(Condition)
-	{
-		AbilityTemplate.AbilityMultiTargetConditions.AddItem(Condition);
-	}
+	AbilityTemplate.AbilityTriggers = OriginalAbility.AbilityTriggers;
 
-	foreach OriginalAbility.AbilityTargetEffects(Effect)
-	{
-		AbilityTemplate.AbilityTargetEffects.AddItem(Effect);
-	}
+	AbilityTemplate.AdditionalAbilities = OriginalAbility.AdditionalAbilities;
+	AbilityTemplate.PrerequisiteAbilities = OriginalAbility.PrerequisiteAbilities;
+	AbilityTemplate.OverrideAbilities = OriginalAbility.OverrideAbilities;
 
-	foreach OriginalAbility.AbilityMultiTargetEffects(Effect)
-	{
-		AbilityTemplate.AbilityMultiTargetEffects.AddItem(Effect);
-	}
+	AbilityTemplate.AssociatedPassives = OriginalAbility.AssociatedPassives;
+	AbilityTemplate.AbilityEventListeners = OriginalAbility.AbilityEventListeners;
+	AbilityTemplate.PostActivationEvents = OriginalAbility.PostActivationEvents;
 
-	foreach OriginalAbility.AbilityShooterEffects(Effect)
-	{
-		AbilityTemplate.AbilityShooterEffects.AddItem(Effect);
-	}
-
-	foreach OriginalAbility.AbilityTriggers(AbilityTrigger)
-	{
-		AbilityTemplate.AbilityTriggers.AddItem(AbilityTrigger);
-	}
-
-	foreach OriginalAbility.AdditionalAbilities(AbilityName)
-	{
-		AbilityTemplate.AdditionalAbilities.AddItem(AbilityName);
-	}
-
-	foreach OriginalAbility.PrerequisiteAbilities(AbilityName)
-	{
-		AbilityTemplate.PrerequisiteAbilities.AddItem(AbilityName);
-	}
-
-	foreach OriginalAbility.OverrideAbilities(AbilityName)
-	{
-		AbilityTemplate.OverrideAbilities.AddItem(AbilityName);
-	}
-
-	foreach OriginalAbility.AssociatedPassives(AbilityName)
-	{
-		AbilityTemplate.AssociatedPassives.AddItem(AbilityName);
-	}
-
-	foreach OriginalAbility.AbilityEventListeners(EventListener)
-	{
-		AbilityTemplate.AbilityEventListeners.AddItem(EventListener);
-	}
-
-	foreach OriginalAbility.PostActivationEvents(EventName)
-	{
-		AbilityTemplate.PostActivationEvents.AddItem(EventName);
-	}
-
-	foreach OriginalAbility.ChosenReinforcementGroupName(GroupName)
-	{
-		AbilityTemplate.ChosenReinforcementGroupName.AddItem(GroupName);
-	}
-
-	foreach OriginalAbility.ChosenExcludeTraits(TraitName)
-	{
-		AbilityTemplate.ChosenExcludeTraits.AddItem(TraitName);
-	}
-
-	foreach OriginalAbility.HideIfAvailable(AbilityName)
-	{
-		AbilityTemplate.HideIfAvailable.AddItem(AbilityName);
-	}
-
-	foreach OriginalAbility.HideErrors(AbilityName)
-	{
-		AbilityTemplate.HideErrors.AddItem(AbilityName);
-	}
-
-	foreach OriginalAbility.UIStatMarkups(Markup)
-	{
-		AbilityTemplate.UIStatMarkups.AddItem(Markup);
-	}
+	AbilityTemplate.ChosenReinforcementGroupName = OriginalAbility.ChosenReinforcementGroupName;
+	AbilityTemplate.ChosenExcludeTraits = OriginalAbility.ChosenExcludeTraits;
+	AbilityTemplate.HideIfAvailable = OriginalAbility.HideIfAvailable;
+	AbilityTemplate.HideErrors = OriginalAbility.HideErrors;
+	AbilityTemplate.UIStatMarkups = OriginalAbility.UIStatMarkups;
 
 	AbilityTemplate.BuildNewGameStateFn = OriginalAbility.BuildNewGameStateFn;
 	AbilityTemplate.BuildInterruptGameStateFn = OriginalAbility.BuildInterruptGameStateFn;
@@ -333,8 +253,6 @@ static function X2AbilityTemplate CloneAbility(X2AbilityTemplate OriginalAbility
 	AbilityTemplate.OverrideAbilityAvailabilityFn = OriginalAbility.OverrideAbilityAvailabilityFn;
 
 	AbilityTemplate.MP_PerkOverride = OriginalAbility.MP_PerkOverride;
-
-	return AbilityTemplate;
 }
 
 static function bool IsUnitStatLimitReached(float StatAmount, ECharStatType StatType, array<CovertActionStatRewardLimit> StatRewardLimits)

@@ -9,6 +9,9 @@ var config(GameData_SoldierSkills) array<name> ABILITY_IGNORE_BASE_WEAPON_DAMAGE
 
 var config(GameData_SoldierSkills) array<AbilityEnvironmentalDamageControl> ABILITY_ENVIRONMENTAL_DAMAGE;
 
+var config(GameData_SoldierSkills) array<name> UNIT_TYPE_LOST_CANT_TARGET;
+var config(GameData_SoldierSkills) array<name> UNIT_TEMPLATE_LOST_CANT_TARGET;
+
 static event OnPostTemplatesCreated()
 {
 	local X2AbilityTemplateManager AbilityTemplateManager;
@@ -17,6 +20,7 @@ static event OnPostTemplatesCreated()
 
 	AbilityTemplateManager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
 
+	LostCantTargetUnit(AbilityTemplateManager);
 	RageStrikeIsMeleeAttack(AbilityTemplateManager);
 	ControlAbilityEnvironmentalDamage(AbilityTemplateManager);
 
@@ -33,6 +37,27 @@ static event OnPostTemplatesCreated()
 
 	FeedbackCanOnlyTriggerOnce(AbilityTemplateManager);
 	IgnoreBaseWeaponDamage(AbilityTemplateManager);
+}
+
+static function LostCantTargetUnit(X2AbilityTemplateManager AbilityTemplateManager)
+{
+	local X2AbilityTemplate AbilityTemplate;
+	local X2Condition_UnitPropertyTweak UnitPropertyCondition;
+
+	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
+
+	AbilityTemplate = AbilityTemplateManager.FindAbilityTemplate('Ragestrike');
+
+	if (AbilityTemplate == none)
+	{
+		return;
+	}
+
+	UnitPropertyCondition = new class'X2Condition_UnitPropertyTweak';
+	UnitPropertyCondition.ExcludeTypes = default.UNIT_TYPE_LOST_CANT_TARGET;
+	UnitPropertyCondition.ExcludeTemplates = default.UNIT_TEMPLATE_LOST_CANT_TARGET;
+
+	AbilityTemplate.AbilityTargetConditions.AddItem(UnitPropertyCondition);
 }
 
 static function RageStrikeIsMeleeAttack(X2AbilityTemplateManager AbilityTemplateManager)
@@ -81,9 +106,9 @@ static function ControlAbilityEnvironmentalDamage(X2AbilityTemplateManager Abili
 				continue;
 			}
 
-			WeaponEffect.EnvironmentalDamageAmount = EnvironmentalDamageControl.EnvironmentDamage;
-
 			`Log("Changing Environmental Damage from" @ WeaponEffect.EnvironmentalDamageAmount @ "to" @ EnvironmentalDamageControl.EnvironmentDamage @ "for template" @ AbilityTemplate.DataName, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+
+			WeaponEffect.EnvironmentalDamageAmount = EnvironmentalDamageControl.EnvironmentDamage;
 		}
 	}
 }
@@ -149,7 +174,9 @@ static function CantUseAbilityUnderSuppression(X2AbilityTemplateManager AbilityT
 static function ReworkEUBerserkerBullRush(X2AbilityTemplateManager AbilityTemplateManager)
 {
 	local X2AbilityTemplate AbilityTemplate;
-	local X2Condition_OnTeamTurn TeamTurnCondition;
+	local X2Condition_OnTeamAction TeamActionCondition;
+	local X2Effect_PersistentStatChange BullRushTriggeredEffect;
+	local int AbilityTargetEffectIndex;
 
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
 
@@ -160,9 +187,26 @@ static function ReworkEUBerserkerBullRush(X2AbilityTemplateManager AbilityTempla
 		return;
 	}
 
-	TeamTurnCondition = new class'X2Condition_OnTeamTurn';
-	TeamTurnCondition.Team = eTeam_XCom;
-	AbilityTemplate.AbilityShooterConditions.AddItem(TeamTurnCondition);
+	AbilityTemplate.AbilityCooldown = none;
+
+	BullRushTriggeredEffect = new class'X2Effect_PersistentStatChange';
+	BullRushTriggeredEffect.EffectName = 'BullRushTriggered';
+	BullRushTriggeredEffect.DuplicateResponse = eDupe_Ignore;
+	BullRushTriggeredEffect.BuildPersistentEffect(1, false, true, true, eGameRule_PlayerTurnEnd);
+	BullRushTriggeredEffect.AddPersistentStatChange(eStat_Mobility, 0.5, MODOP_Multiplication);
+	AbilityTemplate.AddTargetEffect(BullRushTriggeredEffect);
+
+	TeamActionCondition = new class'X2Condition_OnTeamAction';
+	TeamActionCondition.Team = eTeam_XCom;
+	AbilityTemplate.AbilityShooterConditions.AddItem(TeamActionCondition);
+
+	for (AbilityTargetEffectIndex = 0; AbilityTargetEffectIndex < AbilityTemplate.AbilityTargetEffects.Length; ++AbilityTargetEffectIndex)
+	{
+		if(AbilityTemplate.AbilityTargetEffects[AbilityTargetEffectIndex].IsA('X2Effect_GrantActionPoints') )
+		{
+			X2Effect_GrantActionPoints(AbilityTemplate.AbilityTargetEffects[AbilityTargetEffectIndex]).NumActionPoints = 2;
+		}
+	}
 }
 
 static function DisruptorRifleCritUnitCondition(X2AbilityTemplateManager AbilityTemplateManager)
@@ -251,7 +295,8 @@ static function RecreateDevastatingPunchAtMeleeRange(X2AbilityTemplateManager Ab
 {
 	local X2AbilityTemplate OriginalAbilityTemplate;
 	local X2AbilityTemplate AbilityTemplate;
-	local X2AbilityTarget_Single MeleeAtRange;
+	local X2AbilityTarget_MovingMelee MeleeAtRange;
+	local X2Condition_UnitEffects BullRushTriggeredCondition;
 
 	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
 
@@ -269,12 +314,17 @@ static function RecreateDevastatingPunchAtMeleeRange(X2AbilityTemplateManager Ab
 		return;
 	}
 
-	AbilityTemplate = class'Helper_Tweaks'.static.CloneAbility(OriginalAbilityTemplate, AbilityTemplate);
+	class'Helper_Tweaks'.static.CloneAbility(OriginalAbilityTemplate, AbilityTemplate);
 
-	MeleeAtRange = new class'X2AbilityTarget_Single';
-	MeleeAtRange.OnlyIncludeTargetsInsideWeaponRange = true;
-	MeleeAtRange.bAllowDestructibleObjects = true;
+	BullRushTriggeredCondition = new class'X2Condition_UnitEffects';
+	BullRushTriggeredCondition.AddExcludeEffect('BullRushTriggered', 'AA_AbilityUnavailable');
+	OriginalAbilityTemplate.AbilityShooterConditions.AddItem(BullRushTriggeredCondition);
+
+	MeleeAtRange = new class'X2AbilityTarget_MovingMelee';
+	MeleeAtRange.MovementRangeAdjustment = 2;
 	AbilityTemplate.AbilityTargetStyle = MeleeAtRange;
+
+	AbilityTemplate.TargetingMethod = none;
 }
 
 static function RecreateBladestormAssassinAttack(X2AbilityTemplateManager AbilityTemplateManager)
@@ -300,7 +350,7 @@ static function RecreateBladestormAssassinAttack(X2AbilityTemplateManager Abilit
 		return;
 	}
 
-	AbilityTemplate = class'Helper_Tweaks'.static.CloneAbility(OriginalAbilityTemplate, AbilityTemplate);
+	class'Helper_Tweaks'.static.CloneAbility(OriginalAbilityTemplate, AbilityTemplate);
 
 	ToHitCalc = new class'X2AbilityToHitCalc_StandardMelee';
 	ToHitCalc.bReactionFire = true;
