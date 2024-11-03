@@ -20,11 +20,11 @@ static function CHEventListenerTemplate CreateCovertActionStaffSlotFilledTemplat
 {
 	local CHEventListenerTemplate Template;
 
-	`CREATE_X2TEMPLATE(class'CHEventListenerTemplate', Template, 'CAUnitSelected');
+	`CREATE_X2TEMPLATE(class'CHEventListenerTemplate', Template, 'CovertActionUnitSelected');
 
 	Template.RegisterInTactical = false;
 	Template.RegisterInStrategy = true;
-	Template.AddCHEvent('CovertAction_UpdateRewardString', CanUnitGainReward, ELD_Immediate);
+	Template.AddCHEvent('CovertAction_UpdateRewardString', OverrideCovertActionRewardString, ELD_Immediate);
 
 	return Template;
 }
@@ -37,12 +37,12 @@ static function CHEventListenerTemplate CreateOnSquadSelectUpdate()
 
 	Template.RegisterInTactical = false;
 	Template.RegisterInStrategy = true;
-	Template.AddCHEvent('rjSquadSelect_ExtraInfo', CanUnitGainRewardWithCI, ELD_Immediate, 100);
+	Template.AddCHEvent('rjSquadSelect_ExtraInfo', OverrideSquadSelectRewardString, ELD_Immediate, 100);
 
 	return Template;
 }
 
-static function EventListenerReturn CanUnitGainReward(Object EventData, Object EventSource, XComGameState NewGameState, Name Event, Object CallbackData)
+static function EventListenerReturn OverrideCovertActionRewardString(Object EventData, Object EventSource, XComGameState NewGameState, Name Event, Object CallbackData)
 {
 	local XComLWTuple Tuple;
 	local XComGameState_Reward RewardState;
@@ -87,7 +87,7 @@ static function EventListenerReturn CanUnitGainReward(Object EventData, Object E
 	}
 
 	UnitRef = StaffSlotState.GetAssignedStaffRef();
-	UnitState = XComGameState_Unit(`XCOMHISTORY.GetGameStateForObjectID(UnitRef.ObjectID));
+	UnitState = XComGameState_Unit(History.GetGameStateForObjectID(UnitRef.ObjectID));
 
 	if (UnitState == none)
 	{
@@ -105,21 +105,24 @@ static function EventListenerReturn CanUnitGainReward(Object EventData, Object E
 	return ELR_NoInterrupt;
 }
 
-static function EventListenerReturn CanUnitGainRewardWithCI(Object EventData, Object EventSource, XComGameState NewGameState, Name Event, Object CallbackData)
+static function EventListenerReturn OverrideSquadSelectRewardString(Object EventData, Object EventSource, XComGameState NewGameState, Name Event, Object CallbackData)
 {
 	local XComGameStateHistory History;
-	local UIScreenStack ScreenStack;
-	local XComGameState_Reward RewardState;
-	local SSAAT_SquadSelectConfiguration Configuration;
-	local UICovertActionsGeoscape UICovertAction;
 	local XComGameState_CovertAction ActionState;
+	local XComGameState_Reward RewardState;
 	local XComGameState_Unit UnitState;
 	local StateObjectReference UnitRef;
-	local LWTuple Tuple;
-	local array<SSAAT_SlotNote> Notes;
+
+	local UIScreenStack ScreenStack;
+	local UICovertActionsGeoscape UICovertAction;
+	local SSAAT_SquadSelectConfiguration Configuration;
 	local SSAAT_SlotNote Note;
+	local array<SSAAT_SlotNote> Notes;
+
+	local LWTuple Tuple;
 	local LWTuple NoteTuple;
 	local LWTValue Value;
+
 	local int SlotIndex;
 	local int StatBonus;
 	local int NoteIndex;
@@ -143,6 +146,7 @@ static function EventListenerReturn CanUnitGainRewardWithCI(Object EventData, Ob
 		return ELR_NoInterrupt;
 	}
 
+	SlotIndex = Tuple.Data[0].i;
 	Notes = Configuration.GetSlotConfiguration(SlotIndex).Notes;
 
 	for (i = Notes.Length - 1; i >= 0; i--)
@@ -161,7 +165,6 @@ static function EventListenerReturn CanUnitGainRewardWithCI(Object EventData, Ob
 		}
 	}
 
-	SlotIndex = Tuple.Data[0].i;
 	Configuration.Slots[SlotIndex].Notes[NoteIndex].BGColor = class'UIUtilities_Colors'.const.GOOD_HTML_COLOR;
 
 	ScreenStack = `SCREENSTACK;
@@ -211,8 +214,6 @@ static function EventListenerReturn CanUnitGainRewardWithCI(Object EventData, Ob
 		return ELR_NoInterrupt;
 	}
 
-	
-
 	StatBonus = class'Helper_Tweaks'.static.ExtractNumberFromString(Note.Text);
 
 	if (ShouldRewriteReward(UnitState, RewardState, StatBonus))
@@ -222,13 +223,13 @@ static function EventListenerReturn CanUnitGainRewardWithCI(Object EventData, Ob
 		Value.kind = LWTVObject;
 		NoteTuple = new class'LWTuple';
 		NoteTuple.Data.Length = 3;
-		
+
 		NoteTuple.Data[0].kind = LWTVString;
 		NoteTuple.Data[0].s = default.ReasonNoReward;
 
 		NoteTuple.Data[1].kind = LWTVString;
 		NoteTuple.Data[1].s = "000000";
-	
+
 		NoteTuple.Data[2].kind = LWTVString;
 		NoteTuple.Data[2].s = class'UIUtilities_Colors'.const.BAD_HTML_COLOR;
 
@@ -239,10 +240,16 @@ static function EventListenerReturn CanUnitGainRewardWithCI(Object EventData, Ob
 	return ELR_NoInterrupt;
 }
 
+static private function bool IsEventStringRewardString(string EventString, XComGameState_Reward RewardState)
+{
+	return (InStr(EventString, RewardState.GetRewardPreviewString()) != -1 || InStr(EventString, RewardState.GetRewardString()) != -1);
+}
+
 static private function bool ShouldRewriteReward(XComGameState_Unit UnitState, XComGameState_Reward RewardState, int StatBonus)
 {
 	local CovertActionStatRewardLimit StatRewardLimit;
 	local ECharStatType StatType;
+	local string StatTypeText;
 	local int StatLimit;
 	local int UnitStat;
 	local int ScanStatRewardLimit;
@@ -266,15 +273,16 @@ static private function bool ShouldRewriteReward(XComGameState_Unit UnitState, X
 	StatType = StatRewardLimit.StatType;
 	StatLimit = StatRewardLimit.StatLimit;
 	UnitStat = int(UnitState.GetMaxStat(StatType));
+	StatTypeText = class'X2TacticalGameRulesetDataStructures'.default.m_aCharStatLabels[StatType];
 
 	if (UnitStat + StatBonus > StatLimit)
 	{
-		`Log("Stat limit" @ StatLimit @ "reached. This unit won't receive stat boost", class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+		`Log(StatTypeText @ "stat limit" @ StatLimit @ "reached. This unit won't receive stat boost", class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
 		return true;
 	}
 	else
 	{
-		`Log("This unit has not reached stat limit" @ StatLimit $ ". They will receive" @ RewardState.GetRewardPreviewString(), class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+		`Log("This unit has not reached" @ StatTypeText @ "stat limit" @ StatLimit, class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
 		return false;
 	}
 }

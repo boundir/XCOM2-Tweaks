@@ -1,20 +1,18 @@
-class X2Condition_OnTeamTurn extends X2Condition;
+class X2Condition_OnTeamAction extends X2Condition;
 
 var ETeam Team;
 
-event name CallMeetsCondition(XComGameState_BaseObject kTarget) 
+event name CallMeetsCondition(XComGameState_BaseObject kTarget)
 {
 	local XComGameState_Unit UnitState;
 
-	`Log(`StaticLocation, class'Helper_Tweaks'.default.EnableTrace, 'TweaksTrace');
-	
 	UnitState = XComGameState_Unit(kTarget);
-	
+
 	if (UnitState != none)
 	{
 		if (`TACTICALRULES.GetUnitActionTeam() == Team)
 		{
-			return 'AA_Success'; 
+			return 'AA_Success';
 		}
 	}
 	else
@@ -25,7 +23,7 @@ event name CallMeetsCondition(XComGameState_BaseObject kTarget)
 	return 'AA_AbilityUnavailable';
 }
 
-DefaultProperties
+defaultproperties
 {
 	Team = eTeam_XCom;
 }

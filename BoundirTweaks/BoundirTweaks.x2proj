@@ -26,8 +26,6 @@
     <Folder Include="Src\BoundirTweaks\Classes" />
     <Folder Include="Src\LW_Tuple" />
     <Folder Include="Src\LW_Tuple\Classes" />
-    <Folder Include="Src\WallClimbOverride" />
-    <Folder Include="Src\WallClimbOverride\Classes" />
     <Content Include="ModPreview.jpg" />
     <Content Include="Config\XComEditor.ini" />
     <Content Include="Config\XComEngine.ini" />
@@ -37,6 +35,7 @@
     <Content Include="Config\XComGameData_SoldierSkills.ini" />
     <Content Include="Config\XComGameData_WeaponData.ini" />
     <Content Include="Config\EUBerserker\XComAI.ini" />
+    <Content Include="Config\Framework\XComRedefineUnits.ini" />
     <Content Include="Config\Framework\XComRepurposeAbilities.ini" />
     <Content Include="Config\MilitiaShootingTarget\XComAI.ini" />
     <Content Include="Localization\BoundirTweaks.int" />
@@ -46,14 +45,15 @@
     <Content Include="Src\BoundirTweaks\Classes\ChosenTrainingDecorator.uc" />
     <Content Include="Src\BoundirTweaks\Classes\DarkEventActivationRestrictionDecorator.uc" />
     <Content Include="Src\BoundirTweaks\Classes\Helper_Tweaks.uc" />
-    <Content Include="Src\BoundirTweaks\Classes\UICovertActionStaffSlot_Tweaks.uc" />
+    <Content Include="Src\BoundirTweaks\Classes\UICovertActionStaffSlot_Tweak.uc" />
     <Content Include="Src\BoundirTweaks\Classes\WeaponBreakthroughDecorator.uc" />
     <Content Include="Src\BoundirTweaks\Classes\X2Ability_Tweaks.uc" />
     <Content Include="Src\BoundirTweaks\Classes\X2BreakthroughCondition_WeaponTypeTweak.uc" />
-    <Content Include="Src\BoundirTweaks\Classes\X2Condition_OnTeamTurn.uc" />
+    <Content Include="Src\BoundirTweaks\Classes\X2Condition_OnTeamAction.uc" />
     <Content Include="Src\BoundirTweaks\Classes\X2Condition_UnitPropertyTweak.uc" />
     <Content Include="Src\BoundirTweaks\Classes\X2DLCInfo_AbilityTweaks.uc" />
     <Content Include="Src\BoundirTweaks\Classes\X2DLCInfo_CharacterTweaks.uc" />
+    <Content Include="Src\BoundirTweaks\Classes\X2DLCInfo_DisableAmbush.uc" />
     <Content Include="Src\BoundirTweaks\Classes\X2DLCInfo_ItemTweaks.uc" />
     <Content Include="Src\BoundirTweaks\Classes\X2DLCInfo_ResistanceWarriorTweaks.uc" />
     <Content Include="Src\BoundirTweaks\Classes\X2DLCInfo_StrategyTweaks.uc" />
@@ -63,6 +63,5 @@
     <Content Include="Src\BoundirTweaks\Classes\X2EventListener_CovertActionStaffSlotFilled.uc" />
     <Content Include="Src\BoundirTweaks\Classes\X2EventListener_GTSTrainingTweak.uc" />
     <Content Include="Src\LW_Tuple\Classes\LWTuple.uc" />
-    <Content Include="Src\WallClimbOverride\Classes\X2Action_MoveClimbWall_Override.uc" />
   </ItemGroup>
 </Project>

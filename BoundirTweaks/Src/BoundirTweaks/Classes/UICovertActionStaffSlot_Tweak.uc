@@ -1,12 +1,4 @@
-//---------------------------------------------------------------------------------------
-//  FILE:    UICovertActionStaffSlot.uc
-//  AUTHOR:  Joe Weinhoffer
-//
-//---------------------------------------------------------------------------------------
-//  Copyright (c) 2016 Firaxis Games, Inc. All rights reserved.
-//---------------------------------------------------------------------------------------
-
-class UICovertActionStaffSlot_Tweaks extends UICovertActionStaffSlot dependson(UIPersonnel, XComGameState_CovertAction);
+class UICovertActionStaffSlot_Tweak extends UICovertActionStaffSlot dependson(UIPersonnel, XComGameState_CovertAction);
 
 function UpdateData()
 {
