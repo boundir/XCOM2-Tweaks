@@ -27,6 +27,20 @@ static function PullResistanceWarriorFromCharacterPool(XComGameState StartState)
 	History = `XCOMHISTORY;
 	ProfileSettings = `XPROFILESETTINGS;
 
+	if (CharacterPoolManager.CharacterPool.Length == 0)
+	{
+		`Log("No character found in the Character Pool. Skipping.", class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+
+		return;
+	}
+
+	if (ProfileSettings.Data.m_eCharPoolUsage != eCPSM_PoolOnly && ProfileSettings.Data.m_eCharPoolUsage != eCPSM_Mixed)
+	{
+		`Log("Character Pool setting does not pull from it. Skipping.", class'Helper_Tweaks'.default.EnableDebug, 'TweaksDebug');
+
+		return;
+	}
+
 	foreach XComHQ.Crew(UnitRef)
 	{
 		UnitState = XComGameState_Unit(History.GetGameStateForObjectID(UnitRef.ObjectID));
